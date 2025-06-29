@@ -33,9 +33,22 @@ function insurance_crm_frontend_can_access_module($module) {
         return true; // Allow access if license manager is not available
     }
     
-    // Check license bypass first
+    // Check license bypass first - show debug info for admins
     if ($insurance_crm_license_manager->license_api && 
         $insurance_crm_license_manager->license_api->is_license_bypassed()) {
+        
+        // Log bypass usage for debugging
+        error_log('[LISANS DEBUG] Frontend: License bypass is ENABLED - all modules allowed for module: ' . $module);
+        
+        // Show admin notice if user has admin capabilities
+        if (current_user_can('manage_options')) {
+            add_action('wp_footer', function() {
+                echo '<div style="position: fixed; top: 32px; right: 20px; background: #ff6b6b; color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+                    ⚠️ LİSANS BYPASS AKTIF - Tüm modüller erişilebilir
+                </div>';
+            });
+        }
+        
         return true;
     }
     
@@ -59,9 +72,16 @@ function insurance_crm_frontend_can_access_module($module) {
  * @param string $module_name Display name for the module
  */
 function insurance_crm_display_frontend_license_warning($module, $module_name = '') {
+    global $insurance_crm_license_manager;
+    
     if (empty($module_name)) {
         $module_name = ucfirst($module);
     }
+    
+    // Check if bypass mode is enabled (should not happen in this function but just in case)
+    $is_bypassed = $insurance_crm_license_manager && 
+                   $insurance_crm_license_manager->license_api && 
+                   $insurance_crm_license_manager->license_api->is_license_bypassed();
     
     echo '<div class="frontend-license-warning" style="
         background-color: #fff3cd;
@@ -79,7 +99,18 @@ function insurance_crm_display_frontend_license_warning($module, $module_name = 
     echo '<div style="font-size: 18px;">⚠️</div>';
     echo '<div>';
     echo '<strong>Lisans Uyarısı:</strong> ';
-    echo 'Lisansınız bu modülü (' . esc_html($module_name) . ') kapsamıyor, lütfen lisansınızı güncelleyin.';
+    echo 'Lisansınız bu modülü (' . esc_html($module_name) . ') kapsamıyor.';
+    
+    // Add debug info for admins
+    if (current_user_can('manage_options')) {
+        echo '<br><small style="color: #666; font-size: 12px;">';
+        echo 'Debug: Modül = ' . esc_html($module);
+        if ($is_bypassed) {
+            echo ' | Bypass = Aktif (Bu uyarı görünmemeli)';
+        }
+        echo '</small>';
+    }
+    
     echo '</div>';
     echo '</div>';
     
@@ -103,7 +134,24 @@ function insurance_crm_display_frontend_license_warning($module, $module_name = 
  */
 function insurance_crm_check_frontend_module_access($module, $module_name = '') {
     if (!insurance_crm_frontend_can_access_module($module)) {
-        insurance_crm_display_frontend_license_warning($module, $module_name);
+        // Redirect to license restriction page instead of showing inline warning
+        $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $restriction_url = add_query_arg(array(
+            'view' => 'license-restriction',
+            'restriction' => 'module',
+            'module' => $module
+        ), get_permalink());
+        
+        // Use JavaScript redirect to avoid headers already sent issues
+        echo '<script>window.location.href = "' . esc_url($restriction_url) . '";</script>';
+        echo '<noscript><meta http-equiv="refresh" content="0;url=' . esc_url($restriction_url) . '"></noscript>';
+        
+        // Also display a quick message in case JS is disabled
+        echo '<div style="text-align: center; padding: 20px;">
+            <p>Lisansınız bu modülü içermiyor. Yönlendiriliyorsunuz...</p>
+            <p><a href="' . esc_url($restriction_url) . '">Buraya tıklayın</a> eğer otomatik yönlendirme çalışmıyorsa.</p>
+        </div>';
+        
         return false;
     }
     return true;
