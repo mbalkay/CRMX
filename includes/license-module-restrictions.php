@@ -33,50 +33,78 @@ class Insurance_CRM_Module_Restrictions {
             'name' => 'Dashboard',
             'description' => 'Ana gösterge paneli ve istatistikler',
             'admin_pages' => array('insurance-crm'),
-            'capabilities' => array('view_dashboard'),
+            'capabilities' => array('manage_insurance_crm'),
             'priority' => 1
         ),
         'customers' => array(
             'name' => 'Müşteriler',
             'description' => 'Müşteri yönetimi ve işlemleri',
             'admin_pages' => array('insurance-crm-customers'),
-            'capabilities' => array('manage_customers'),
+            'capabilities' => array('manage_insurance_crm'),
             'priority' => 2
         ),
         'policies' => array(
             'name' => 'Poliçeler',
             'description' => 'Poliçe yönetimi ve takibi',
             'admin_pages' => array('insurance-crm-policies'),
-            'capabilities' => array('manage_policies'),
+            'capabilities' => array('manage_insurance_crm'),
             'priority' => 3
         ),
         'quotes' => array(
             'name' => 'Teklifler',
             'description' => 'Teklif hazırlama ve yönetimi',
             'admin_pages' => array('insurance-crm-quotes'),
-            'capabilities' => array('manage_quotes'),
+            'capabilities' => array('manage_insurance_crm'),
             'priority' => 4
         ),
         'tasks' => array(
             'name' => 'Görevler',
             'description' => 'Görev yönetimi ve takibi',
             'admin_pages' => array('insurance-crm-tasks'),
-            'capabilities' => array('manage_tasks'),
+            'capabilities' => array('manage_insurance_crm'),
             'priority' => 5
         ),
         'reports' => array(
             'name' => 'Raporlar',
             'description' => 'Detaylı raporlama ve analizler',
             'admin_pages' => array('insurance-crm-reports'),
-            'capabilities' => array('view_reports'),
+            'capabilities' => array('manage_insurance_crm'),
             'priority' => 6
         ),
         'data_transfer' => array(
             'name' => 'Veri Aktarımı',
             'description' => 'Veri içe/dışa aktarma işlemleri',
             'admin_pages' => array('insurance-crm-data-transfer'),
-            'capabilities' => array('manage_data_transfer'),
+            'capabilities' => array('manage_insurance_crm'),
             'priority' => 7
+        ),
+        'representatives' => array(
+            'name' => 'Müşteri Temsilcileri',
+            'description' => 'Temsilci yönetimi ve işlemleri',
+            'admin_pages' => array('insurance-crm-representatives'),
+            'capabilities' => array('manage_insurance_crm'),
+            'priority' => 8
+        ),
+        'settings' => array(
+            'name' => 'Ayarlar',
+            'description' => 'Sistem ayarları ve konfigürasyon',
+            'admin_pages' => array('insurance-crm-settings'),
+            'capabilities' => array('manage_insurance_crm'),
+            'priority' => 9
+        ),
+        'logs' => array(
+            'name' => 'Loglar',
+            'description' => 'Sistem logları ve aktivite takibi',
+            'admin_pages' => array('insurance-crm-logs'),
+            'capabilities' => array('manage_insurance_crm'),
+            'priority' => 10
+        ),
+        'announcements' => array(
+            'name' => 'Duyurular',
+            'description' => 'Genel duyuru yönetimi',
+            'admin_pages' => array('insurance-crm-announcements'),
+            'capabilities' => array('manage_insurance_crm'),
+            'priority' => 11
         )
     );
     
@@ -148,28 +176,33 @@ class Insurance_CRM_Module_Restrictions {
         
         // Check if module exists
         if (!isset($this->available_modules[$module])) {
+            error_log('[LISANS DEBUG] Module not found: ' . $module);
             return false;
         }
         
         // Admin users always have access
         if (user_can($user_id, 'administrator')) {
+            error_log('[LISANS DEBUG] Admin access granted for module: ' . $module);
             return true;
         }
         
-        // Check license bypass
+        // Check license bypass first
         if ($insurance_crm_license_manager && 
             $insurance_crm_license_manager->license_api && 
             $insurance_crm_license_manager->license_api->is_license_bypassed()) {
+            error_log('[LISANS DEBUG] License bypassed, access granted for module: ' . $module);
             return true;
         }
         
         // Check basic license validity
         if (!$insurance_crm_license_manager || !$insurance_crm_license_manager->can_access_data()) {
+            error_log('[LISANS DEBUG] Basic license check failed for module: ' . $module);
             return false;
         }
         
         // Check if module is in licensed modules list
         if (!$insurance_crm_license_manager->is_module_allowed($module)) {
+            error_log('[LISANS DEBUG] Module not in licensed modules list: ' . $module);
             return false;
         }
         
@@ -177,10 +210,12 @@ class Insurance_CRM_Module_Restrictions {
         $module_caps = $this->available_modules[$module]['capabilities'];
         foreach ($module_caps as $cap) {
             if (!user_can($user_id, $cap)) {
+                error_log('[LISANS DEBUG] User lacks capability ' . $cap . ' for module: ' . $module);
                 return false;
             }
         }
         
+        error_log('[LISANS DEBUG] Access granted for module: ' . $module);
         return true;
     }
     
@@ -235,8 +270,21 @@ class Insurance_CRM_Module_Restrictions {
             return;
         }
         
-        // Find which module this page belongs to
         $current_page = $_GET['page'];
+        
+        // First check if this is a CRM page that requires general license access
+        if (strpos($current_page, 'insurance-crm') === 0) {
+            global $insurance_crm_license_manager;
+            
+            // Check basic license validity first
+            if ($insurance_crm_license_manager && !$insurance_crm_license_manager->can_access_data()) {
+                error_log('[LISANS DEBUG] General data access denied for page: ' . $current_page);
+                wp_redirect(admin_url('admin.php?page=insurance-crm-license&restriction=data'));
+                exit;
+            }
+        }
+        
+        // Find which module this page belongs to
         $restricted_module = null;
         
         foreach ($this->available_modules as $module => $module_info) {
@@ -246,23 +294,22 @@ class Insurance_CRM_Module_Restrictions {
             }
         }
         
-        // If this is a CRM page but not in our module list, apply general restrictions
-        if (!$restricted_module && strpos($current_page, 'insurance-crm') === 0) {
-            global $insurance_crm_license_manager;
-            if ($insurance_crm_license_manager && !$insurance_crm_license_manager->can_access_data()) {
-                wp_redirect(admin_url('admin.php?page=insurance-crm-license&restriction=data'));
+        // Check module access if we found a matching module
+        if ($restricted_module) {
+            if (!$this->is_module_accessible($restricted_module)) {
+                error_log('[LISANS DEBUG] Module access denied: ' . $restricted_module . ' for page: ' . $current_page);
+                
+                // Store restriction details for the redirect page
+                set_transient('insurance_crm_restriction_details_' . get_current_user_id(), 
+                    $this->get_module_restriction_details($restricted_module), 60);
+                
+                wp_redirect(admin_url('admin.php?page=insurance-crm-license&restriction=module&module=' . $restricted_module));
                 exit;
+            } else {
+                error_log('[LISANS DEBUG] Module access granted: ' . $restricted_module . ' for page: ' . $current_page);
             }
-        }
-        
-        // Check module access
-        if ($restricted_module && !$this->is_module_accessible($restricted_module)) {
-            // Store restriction details for the redirect page
-            set_transient('insurance_crm_restriction_details_' . get_current_user_id(), 
-                $this->get_module_restriction_details($restricted_module), 60);
-            
-            wp_redirect(admin_url('admin.php?page=insurance-crm-license&restriction=module&module=' . $restricted_module));
-            exit;
+        } else {
+            error_log('[LISANS DEBUG] No module restriction found for page: ' . $current_page);
         }
     }
     
@@ -270,7 +317,7 @@ class Insurance_CRM_Module_Restrictions {
      * Filter admin menu to hide restricted items
      */
     public function filter_admin_menu() {
-        global $submenu;
+        global $submenu, $menu;
         
         // Check if we have the main CRM menu
         if (!isset($submenu['insurance-crm'])) {
@@ -284,15 +331,32 @@ class Insurance_CRM_Module_Restrictions {
         foreach ($submenu['insurance-crm'] as $index => $menu_item) {
             $page_slug = $menu_item[2];
             
+            // Skip license page - always allow access
+            if ($page_slug === 'insurance-crm-license') {
+                continue;
+            }
+            
             // Find which module this page belongs to
             $module_found = false;
             foreach ($this->available_modules as $module => $module_info) {
                 if (in_array($page_slug, $module_info['admin_pages'])) {
                     if (!$this->is_module_accessible($module, $user_id)) {
+                        error_log('[LISANS DEBUG] Hiding menu item: ' . $page_slug . ' for module: ' . $module);
                         unset($submenu['insurance-crm'][$index]);
+                    } else {
+                        error_log('[LISANS DEBUG] Keeping menu item: ' . $page_slug . ' for module: ' . $module);
                     }
                     $module_found = true;
                     break;
+                }
+            }
+            
+            // If no module mapping found for a CRM page, check general license access
+            if (!$module_found && strpos($page_slug, 'insurance-crm') === 0) {
+                global $insurance_crm_license_manager;
+                if ($insurance_crm_license_manager && !$insurance_crm_license_manager->can_access_data()) {
+                    error_log('[LISANS DEBUG] Hiding non-mapped CRM menu item: ' . $page_slug);
+                    unset($submenu['insurance-crm'][$index]);
                 }
             }
         }

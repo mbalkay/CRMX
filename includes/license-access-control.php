@@ -147,8 +147,8 @@ function insurance_crm_check_admin_page_access() {
     }
 }
 
-// Hook into admin initialization
-add_action('admin_init', 'insurance_crm_check_admin_page_access', 5);
+// Hook into admin initialization with lower priority to let module restrictions run first
+add_action('admin_init', 'insurance_crm_check_admin_page_access', 10);
 
 /**
  * Filter to restrict data queries
