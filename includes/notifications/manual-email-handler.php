@@ -28,7 +28,24 @@ function insurance_crm_handle_manual_daily_emails() {
     }
     
     // Check user permissions - only boss/managers can send manual emails
-    if (!current_user_can('manage_options')) {
+    $current_user_id = get_current_user_id();
+    
+    // Check if user has admin access (Patron or Müdür roles)
+    $has_access = false;
+    if (function_exists('has_full_admin_access')) {
+        $has_access = has_full_admin_access($current_user_id);
+    } else {
+        // Fallback: check role directly if function not available
+        global $wpdb;
+        $role = $wpdb->get_var($wpdb->prepare(
+            "SELECT role FROM {$wpdb->prefix}insurance_crm_representatives 
+             WHERE user_id = %d AND status = 'active'",
+            $current_user_id
+        ));
+        $has_access = (intval($role) === 1 || intval($role) === 2); // Patron or Müdür
+    }
+    
+    if (!$has_access) {
         wp_die(json_encode(array(
             'success' => false,
             'data' => 'Bu işlem için yetkiniz bulunmuyor.'
