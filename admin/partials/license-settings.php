@@ -94,13 +94,7 @@ if (isset($_POST['insurance_crm_license_action']) && isset($_POST['insurance_crm
             'success' => true,
             'message' => 'Debug modu ' . ($debug_mode ? 'etkinleştirildi' : 'devre dışı bırakıldı') . '.'
         );
-    } elseif ($action === 'toggle_bypass') {
-        $bypass_license = isset($_POST['bypass_license']) ? true : false;
-        update_option('insurance_crm_bypass_license', $bypass_license);
-        $form_result = array(
-            'success' => true,
-            'message' => 'Lisans bypass ' . ($bypass_license ? 'etkinleştirildi' : 'devre dışı bırakıldı') . '.'
-        );
+
     } elseif ($action === 'clear_cache') {
         // Clear all license-related transients and cache
         delete_transient('insurance_crm_license_check');
@@ -1188,23 +1182,6 @@ if ($license_status === 'active' && in_array($license_type, array('monthly', 'ye
                 <!-- Advanced Tools Tab Content -->
                 <div class="admin-tab-content" id="advanced-tools" style="display: none;">
                     <div class="admin-license-info-grid">
-                        <div class="admin-license-info-item">
-                            <h4>Lisans Bypass</h4>
-                            <p>Geliştirme ve test amaçlı bypass ayarı</p>
-                            <form method="post" action="" style="margin-top: 10px;">
-                                <?php wp_nonce_field('insurance_crm_license', 'insurance_crm_license_nonce'); ?>
-                                <input type="hidden" name="insurance_crm_license_action" value="toggle_bypass" />
-                                <label>
-                                    <input type="checkbox" name="bypass_license" value="1" <?php checked(get_option('insurance_crm_bypass_license', false), true); ?> />
-                                    Lisans Kontrolünü Bypass Et (Dikkatli kullanın!)
-                                </label>
-                                <br><br>
-                                <button type="submit" class="admin-btn admin-btn-danger">
-                                    <span class="dashicons dashicons-warning"></span> Bypass Ayarını Güncelle
-                                </button>
-                            </form>
-                        </div>
-                        
                         <div class="admin-license-info-item">
                             <h4>Cache Temizleme</h4>
                             <p>Lisans cache verilerini temizle</p>

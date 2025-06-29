@@ -134,7 +134,24 @@ function insurance_crm_display_frontend_license_warning($module, $module_name = 
  */
 function insurance_crm_check_frontend_module_access($module, $module_name = '') {
     if (!insurance_crm_frontend_can_access_module($module)) {
-        insurance_crm_display_frontend_license_warning($module, $module_name);
+        // Redirect to license restriction page instead of showing inline warning
+        $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $restriction_url = add_query_arg(array(
+            'view' => 'license-restriction',
+            'restriction' => 'module',
+            'module' => $module
+        ), get_permalink());
+        
+        // Use JavaScript redirect to avoid headers already sent issues
+        echo '<script>window.location.href = "' . esc_url($restriction_url) . '";</script>';
+        echo '<noscript><meta http-equiv="refresh" content="0;url=' . esc_url($restriction_url) . '"></noscript>';
+        
+        // Also display a quick message in case JS is disabled
+        echo '<div style="text-align: center; padding: 20px;">
+            <p>Lisansınız bu modülü içermiyor. Yönlendiriliyorsunuz...</p>
+            <p><a href="' . esc_url($restriction_url) . '">Buraya tıklayın</a> eğer otomatik yönlendirme çalışmıyorsa.</p>
+        </div>';
+        
         return false;
     }
     return true;

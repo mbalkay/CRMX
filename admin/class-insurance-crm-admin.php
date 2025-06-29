@@ -164,6 +164,19 @@ if (!class_exists('Insurance_CRM_Admin')) {
                 'insurance-crm-license',
                 array($this, 'display_license_page')
             );
+
+            // Conditionally add bypass control menu only if the file exists
+            $bypass_file = plugin_dir_path(__FILE__) . 'partials/license-bypass-control.php';
+            if (file_exists($bypass_file)) {
+                add_submenu_page(
+                    'insurance-crm',
+                    'Lisans Bypass Kontrolü',
+                    '🔧 Bypass Kontrolü',
+                    'manage_options',
+                    'insurance-crm-license-bypass',
+                    array($this, 'display_license_bypass_page')
+                );
+            }
         }
 
         /**
@@ -286,6 +299,13 @@ if (!class_exists('Insurance_CRM_Admin')) {
          */
         public function display_license_page() {
             include_once('partials/license-settings.php');
+        }
+
+        /**
+         * Lisans bypass kontrol sayfası görüntüleme
+         */
+        public function display_license_bypass_page() {
+            include_once('partials/license-bypass-control.php');
         }
     }
 }
