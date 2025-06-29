@@ -106,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['insurance_crm_setting
             'renewal_notifications' => isset($_POST['renewal_notifications']),
             'task_notifications' => isset($_POST['task_notifications'])
         ),
+        'daily_email_notifications' => isset($_POST['daily_email_notifications']),
         'email_templates' => array(
             'renewal_reminder' => wp_kses_post($_POST['renewal_reminder_template']),
             'task_reminder' => wp_kses_post($_POST['task_reminder_template']),
@@ -157,6 +158,9 @@ if (!isset($settings['occupation_settings'])) {
     $settings['occupation_settings'] = array(
         'default_occupations' => array('Doktor', 'Mühendis', 'Öğretmen', 'Avukat')
     );
+}
+if (!isset($settings['daily_email_notifications'])) {
+    $settings['daily_email_notifications'] = true; // Default to enabled
 }
 
 // Mevcut dosya türlerini al
@@ -319,6 +323,35 @@ $active_tab = isset($_POST['active_tab']) ? sanitize_text_field($_POST['active_t
                                     <?php _e('Görev bildirimlerini etkinleştir', 'insurance-crm'); ?>
                                 </label>
                             </fieldset>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row"><?php _e('Günlük E-posta Bildirimleri', 'insurance-crm'); ?></th>
+                        <td>
+                            <fieldset>
+                                <label for="daily_email_notifications">
+                                    <input type="checkbox" name="daily_email_notifications" id="daily_email_notifications" 
+                                           <?php checked($settings['daily_email_notifications']); ?>>
+                                    <?php _e('Günlük özet e-posta bildirimlerini etkinleştir (8:00 AM)', 'insurance-crm'); ?>
+                                </label>
+                                <p class="description">
+                                    <?php _e('Temsilciler ve yöneticiler için her sabah 8:00\'de kişiselleştirilmiş günlük özet e-postaları gönderilir.', 'insurance-crm'); ?>
+                                </p>
+                            </fieldset>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row"><?php _e('Test Günlük E-posta', 'insurance-crm'); ?></th>
+                        <td>
+                            <button type="button" id="test-daily-email" class="button button-secondary">
+                                <?php _e('Test Günlük E-posta Gönder', 'insurance-crm'); ?>
+                            </button>
+                            <p class="description">
+                                <?php _e('Mevcut kullanıcıya test günlük e-posta gönderir.', 'insurance-crm'); ?>
+                            </p>
+                            <div id="test-daily-email-result" style="margin-top: 10px;"></div>
                         </td>
                     </tr>
                 </table>
@@ -651,6 +684,39 @@ jQuery(document).ready(function($) {
             }, 3000);
         }
     }
+
+    // Test günlük e-posta butonu
+    $('#test-daily-email').click(function() {
+        var button = $(this);
+        var resultDiv = $('#test-daily-email-result');
+        
+        // Butonu devre dışı bırak ve loading göster
+        button.prop('disabled', true).text('Gönderiliyor...');
+        resultDiv.empty();
+        
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'insurance_crm_test_daily_email',
+                nonce: '<?php echo wp_create_nonce('insurance_crm_test_daily_email'); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    resultDiv.html('<div class="notice notice-success inline"><p>' + response.data + '</p></div>');
+                } else {
+                    resultDiv.html('<div class="notice notice-error inline"><p>' + response.data + '</p></div>');
+                }
+            },
+            error: function() {
+                resultDiv.html('<div class="notice notice-error inline"><p>Bir hata oluştu. Lütfen tekrar deneyin.</p></div>');
+            },
+            complete: function() {
+                // Butonu tekrar aktif et
+                button.prop('disabled', false).text('<?php _e('Test Günlük E-posta Gönder', 'insurance-crm'); ?>');
+            }
+        });
+    });
 
     // Sayfa yüklendiğinde aktif sekme ve login_logo değerini kontrol et
     var activeTab = $('#active_tab').val();

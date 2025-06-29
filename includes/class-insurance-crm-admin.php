@@ -45,6 +45,7 @@ class Insurance_CRM_Admin {
         add_action('wp_ajax_insurance_crm_get_customer_policies', array($this, 'ajax_get_customer_policies'));
         add_action('wp_ajax_insurance_crm_test_email', array($this, 'ajax_test_email'));
         add_action('wp_ajax_insurance_crm_test_template_email', array($this, 'ajax_test_template_email'));
+        add_action('wp_ajax_insurance_crm_test_daily_email', array($this, 'ajax_test_daily_email'));
         add_action('wp_ajax_get_customer_data', array($this, 'ajax_get_customer_data'));
         
         // Form handlers
@@ -355,6 +356,52 @@ class Insurance_CRM_Admin {
             wp_send_json_success(sprintf(__('%s şablonu için test e-postası başarıyla gönderildi.', 'insurance-crm'), ucfirst(str_replace('_', ' ', $template_type))));
         } else {
             wp_send_json_error(__('Test e-postası gönderilemedi!', 'insurance-crm'));
+        }
+    }
+
+    /**
+     * Test günlük e-postası gönderir (AJAX)
+     */
+    public function ajax_test_daily_email() {
+        check_ajax_referer('insurance_crm_test_daily_email', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Bu işlem için yetkiniz bulunmuyor.', 'insurance-crm'));
+            return;
+        }
+
+        // Load notification classes
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/notifications/class-notification-scheduler.php';
+        
+        $scheduler = new Insurance_CRM_Notification_Scheduler();
+        $current_user_id = get_current_user_id();
+        
+        // Check if user is a manager or representative
+        global $wpdb;
+        $representative = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}insurance_crm_representatives WHERE user_id = %d AND status = 'active'",
+            $current_user_id
+        ));
+        
+        if (!$representative) {
+            wp_send_json_error(__('Kullanıcı temsilci kaydı bulunamadı.', 'insurance-crm'));
+            return;
+        }
+        
+        // Determine if user is a manager (role 1, 2, or 3)
+        $is_manager = in_array($representative->role, [1, 2, 3]);
+        $notification_type = $is_manager ? 'manager' : 'representative';
+        
+        // Send test notification
+        $result = $scheduler->send_test_notification($current_user_id, $notification_type);
+        
+        if ($result) {
+            $message = $is_manager 
+                ? __('Test yönetici günlük raporu başarıyla gönderildi.', 'insurance-crm')
+                : __('Test temsilci günlük özeti başarıyla gönderildi.', 'insurance-crm');
+            wp_send_json_success($message);
+        } else {
+            wp_send_json_error(__('Test e-postası gönderilemedi! Lütfen günlük e-posta bildirimlerinin aktif olduğundan emin olun.', 'insurance-crm'));
         }
     }
 
