@@ -1,6 +1,6 @@
 <?php
 /**
- * Manager Daily Report Email Template
+ * Manager Daily Report Email Template - Corporate Dashboard Style
  * 
  * Available variables:
  * - {manager_name}
@@ -10,8 +10,11 @@
  * - {system_stats} (array)
  * - {critical_alerts} (array)
  * - {representative_performance} (array)
+ * - {yesterday_performance} (array)
  * - {pending_tasks_by_rep} (array)
  * - {expiring_policies_by_rep} (array)
+ * - {all_pending_tasks} (array)
+ * - {all_expiring_policies} (array)
  */
 
 if (!defined('ABSPATH')) {
@@ -20,34 +23,34 @@ if (!defined('ABSPATH')) {
 ?>
 
 <div class="email-section">
-    <h2>📈 Günlük Sistem Raporu</h2>
-    <p style="font-size: 16px; margin-bottom: 25px;">
-        <strong>{manager_name}</strong> için <strong>{today_day}, {today_date}</strong> sistem durumu ve özet bilgiler.
+    <h2>Yönetici Günlük Raporu</h2>
+    <p style="font-size: 16px; margin-bottom: 25px; color: #495057;">
+        <strong>{manager_name}</strong> • <strong>{today_day}, {today_date}</strong>
     </p>
 </div>
 
-<!-- System Overview -->
+<!-- System Overview Dashboard -->
 <div class="info-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 25px;">
-    <h3 style="color: white; margin-bottom: 15px;">🏢 Sistem Genel Bakış</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px;">
-        <div style="text-align: center;">
-            <div style="font-size: 28px; font-weight: bold;">
+    <h3 style="color: white; margin-bottom: 20px;">Sistem Genel Bakış</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px;">
+        <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+            <div style="font-size: 32px; font-weight: bold; margin-bottom: 5px;">
                 <?php echo isset($variables['system_stats']['total_policies']) ? $variables['system_stats']['total_policies'] : 0; ?>
             </div>
             <div style="font-size: 12px; opacity: 0.9;">Aktif Poliçe</div>
         </div>
-        <div style="text-align: center;">
-            <div style="font-size: 28px; font-weight: bold;">
+        <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+            <div style="font-size: 32px; font-weight: bold; margin-bottom: 5px;">
                 <?php echo isset($variables['system_stats']['total_customers']) ? $variables['system_stats']['total_customers'] : 0; ?>
             </div>
             <div style="font-size: 12px; opacity: 0.9;">Toplam Müşteri</div>
         </div>
-        <div style="text-align: center;">
-            <div style="font-size: 28px; font-weight: bold;">{total_active_representatives}</div>
+        <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+            <div style="font-size: 32px; font-weight: bold; margin-bottom: 5px;">{total_active_representatives}</div>
             <div style="font-size: 12px; opacity: 0.9;">Aktif Temsilci</div>
         </div>
-        <div style="text-align: center;">
-            <div style="font-size: 28px; font-weight: bold;">
+        <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+            <div style="font-size: 32px; font-weight: bold; margin-bottom: 5px;">
                 <?php echo isset($variables['system_stats']['policies_this_month']) ? $variables['system_stats']['policies_this_month'] : 0; ?>
             </div>
             <div style="font-size: 12px; opacity: 0.9;">Bu Ay Poliçe</div>
@@ -57,157 +60,216 @@ if (!defined('ABSPATH')) {
 
 <!-- Critical Alerts -->
 <?php if (!empty($variables['critical_alerts'])): ?>
-<div class="info-card" style="border-left: 4px solid #e74c3c; background-color: #fff5f5;">
-    <h3 style="color: #e74c3c;">⚠️ Kritik Uyarılar</h3>
+<div class="info-card" style="border-left: 4px solid #dc3545; background-color: #fff5f5;">
+    <h3 style="color: #dc3545; margin-bottom: 15px;">Kritik Uyarılar</h3>
     <?php foreach ($variables['critical_alerts'] as $alert): ?>
-        <div style="background-color: #fee; border: 1px solid #fcc; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
-            <strong style="color: #c33;">🚨 <?php echo esc_html($alert); ?></strong>
+        <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 12px; margin-bottom: 10px; border-radius: 4px; color: #721c24;">
+            <strong><?php echo esc_html($alert); ?></strong>
         </div>
     <?php endforeach; ?>
 </div>
 <?php else: ?>
-<div class="info-card" style="border-left: 4px solid #27ae60; background-color: #f0fff4;">
-    <h3 style="color: #27ae60;">✅ Sistem Durumu</h3>
-    <p style="color: #27ae60; text-align: center; padding: 15px;">
-        Kritik uyarı bulunmuyor. Sistem normal çalışıyor.
-    </p>
+<div class="info-card" style="border-left: 4px solid #28a745; background-color: #f0fff4;">
+    <h3 style="color: #28a745;">Sistem Durumu</h3>
+    <div style="text-align: center; padding: 20px; color: #28a745;">
+        <div style="font-size: 48px; margin-bottom: 10px;">✓</div>
+        <div style="font-weight: 600;">Kritik uyarı bulunmuyor - Sistem normal çalışıyor</div>
+    </div>
 </div>
 <?php endif; ?>
 
-<!-- Overdue Tasks Alert -->
-<?php if (isset($variables['system_stats']['overdue_tasks']) && $variables['system_stats']['overdue_tasks'] > 0): ?>
-<div class="info-card" style="border-left: 4px solid #dc3545; background-color: #f8d7da;">
-    <h3 style="color: #dc3545;">⏰ Gecikmiş Görevler</h3>
-    <p style="color: #721c24; font-size: 16px; font-weight: bold;">
-        Toplam <?php echo $variables['system_stats']['overdue_tasks']; ?> adet gecikmiş görev bulunmaktadır!
-    </p>
-    <p style="color: #856404; font-size: 14px;">
-        Bu görevlerin acilen takip edilmesi önerilir.
-    </p>
+<!-- Yesterday's Performance Summary -->
+<?php if (!empty($variables['yesterday_performance'])): ?>
+<div class="info-card">
+    <h3 style="color: #495057; margin-bottom: 20px;">Dünkü Temsilci Performansları</h3>
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left; font-weight: 600;">Temsilci</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Yeni Müşteri</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Satılan Poliçe</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Üretim Tutarı</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($variables['yesterday_performance'] as $rep): ?>
+                    <tr>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600;">
+                            <?php echo esc_html($rep->first_name . ' ' . $rep->last_name); ?>
+                        </td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                            <span style="color: #28a745; font-weight: bold; font-size: 16px;"><?php echo $rep->new_customers; ?></span>
+                        </td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                            <span style="color: #17a2b8; font-weight: bold; font-size: 16px;"><?php echo $rep->sold_policies; ?></span>
+                        </td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                            <span style="color: #6f42c1; font-weight: bold;">
+                                <?php echo number_format($rep->premium_total, 0, ',', '.') . ' ₺'; ?>
+                            </span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php else: ?>
+<div class="info-card">
+    <h3 style="color: #6c757d;">Dünkü Temsilci Performansları</h3>
+    <div style="text-align: center; padding: 30px; color: #6c757d;">
+        Dün herhangi bir satış veya müşteri kaydı gerçekleşmemiş.
+    </div>
 </div>
 <?php endif; ?>
 
 <!-- Today's Priority Tasks -->
 <div class="info-card">
-    <h3 style="color: #dc3545;">🎯 Bugün ve Yakın Zamanda Tamamlanması Gereken İşler</h3>
-    <p style="color: #666; margin-bottom: 15px;">Bugün ve önümüzdeki 3 gün içinde tamamlanması planlanan görevler:</p>
+    <h3 style="color: #dc3545; margin-bottom: 15px;">Bugün ve Yakın Zamanda Tamamlanması Gereken Görevler</h3>
     
     <?php if (!empty($variables['all_pending_tasks'])): ?>
         <?php foreach (array_slice($variables['all_pending_tasks'], 0, 8) as $task): ?>
-            <div class="info-row" style="border-left: 3px solid #dc3545; padding-left: 10px; margin-bottom: 8px;">
-                <div>
-                    <strong><?php echo esc_html($task->task_description); ?></strong>
-                    <br>
-                    <span style="color: #666; font-size: 14px;">
-                        Müşteri: <?php echo esc_html($task->first_name . ' ' . $task->last_name); ?> | 
-                        Temsilci: <?php echo esc_html($task->rep_first_name . ' ' . $task->rep_last_name); ?>
-                    </span>
-                    <br>
-                    <small style="color: #dc3545; font-weight: bold;">
-                        Son Tarih: <?php echo date('d.m.Y H:i', strtotime($task->due_date)); ?>
-                        <?php 
-                        $hours_left = (strtotime($task->due_date) - time()) / 3600;
-                        if ($hours_left < 0) {
-                            echo " (GECİKMİŞ!)";
-                        } elseif ($hours_left < 24) {
-                            echo " (" . round($hours_left) . " saat kaldı)";
-                        } else {
-                            echo " (" . ceil($hours_left / 24) . " gün kaldı)";
-                        }
-                        ?>
-                    </small>
+            <div style="border-left: 3px solid #dc3545; padding: 12px 15px; margin-bottom: 12px; background-color: #fff5f5; border-radius: 4px;">
+                <div style="font-weight: 600; color: #dc3545; margin-bottom: 5px;">
+                    <?php echo esc_html($task->task_description); ?>
+                </div>
+                <div style="color: #6c757d; font-size: 14px; margin-bottom: 5px;">
+                    Müşteri: <?php echo esc_html($task->first_name . ' ' . $task->last_name); ?> | 
+                    Temsilci: <?php echo esc_html($task->rep_first_name . ' ' . $task->rep_last_name); ?>
+                </div>
+                <div style="font-size: 12px; color: #dc3545; font-weight: 600;">
+                    Son Tarih: <?php echo date('d.m.Y H:i', strtotime($task->due_date)); ?>
+                    <?php 
+                    $hours_left = (strtotime($task->due_date) - time()) / 3600;
+                    if ($hours_left < 0) {
+                        echo " (GECİKMİŞ!)";
+                    } elseif ($hours_left < 24) {
+                        echo " (" . round($hours_left) . " saat kaldı)";
+                    } else {
+                        echo " (" . ceil($hours_left / 24) . " gün kaldı)";
+                    }
+                    ?>
                 </div>
             </div>
         <?php endforeach; ?>
         
         <?php if (count($variables['all_pending_tasks']) > 8): ?>
-            <p style="text-align: center; color: #666; font-style: italic; margin-top: 15px;">
-                ... ve <?php echo count($variables['all_pending_tasks']) - 8; ?> adet daha
-            </p>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="<?php echo home_url('/temsilci-paneli/?section=tasks'); ?>" 
+                   style="color: #667eea; text-decoration: none; font-weight: 600;">
+                    +<?php echo count($variables['all_pending_tasks']) - 8; ?> görevi daha göster
+                </a>
+            </div>
         <?php endif; ?>
     <?php else: ?>
-        <p style="color: #28a745; text-align: center; padding: 20px;">
-            ✅ Yakın zamanda tamamlanması gereken kritik görev bulunmuyor.
-        </p>
+        <div style="text-align: center; padding: 30px; color: #28a745;">
+            <div style="font-size: 48px; margin-bottom: 10px;">✓</div>
+            <div style="font-weight: 600;">Yakın zamanda tamamlanması gereken kritik görev bulunmuyor</div>
+        </div>
     <?php endif; ?>
 </div>
 
 <!-- Expiring Policies -->
 <div class="info-card">
-    <h3 style="color: #f39c12;">🔄 Yaklaşan Poliçe Yenilemeleri (30 Gün İçinde)</h3>
+    <h3 style="color: #f39c12; margin-bottom: 15px;">Yaklaşan Poliçe Yenilemeleri (30 Gün İçinde)</h3>
     
     <?php if (!empty($variables['all_expiring_policies'])): ?>
-        <?php foreach (array_slice($variables['all_expiring_policies'], 0, 10) as $policy): ?>
-            <div class="info-row" style="border-left: 3px solid #f39c12; padding-left: 10px; margin-bottom: 8px;">
-                <div>
-                    <strong><?php echo esc_html($policy->policy_number); ?></strong> - <?php echo esc_html($policy->policy_type); ?>
-                    <br>
-                    <span style="color: #666; font-size: 14px;">
-                        Müşteri: <?php echo esc_html($policy->first_name . ' ' . $policy->last_name); ?> | 
-                        Temsilci: <?php echo esc_html($policy->rep_first_name . ' ' . $policy->rep_last_name); ?>
-                    </span>
-                    <br>
-                    <small style="color: #f39c12; font-weight: bold;">
-                        Bitiş: <?php echo date('d.m.Y', strtotime($policy->end_date)); ?>
-                        <?php 
-                        $days_left = ceil((strtotime($policy->end_date) - time()) / (60 * 60 * 24));
-                        echo " ({$days_left} gün kaldı)";
-                        if ($days_left <= 7) {
-                            echo " ⚠️";
-                        }
-                        ?>
-                    </small>
+        <?php foreach (array_slice($variables['all_expiring_policies'], 0, 8) as $policy): ?>
+            <div style="border-left: 3px solid #f39c12; padding: 12px 15px; margin-bottom: 12px; background-color: #fff8e1; border-radius: 4px;">
+                <div style="font-weight: 600; color: #f39c12; margin-bottom: 5px;">
+                    <?php echo esc_html($policy->policy_number); ?> - <?php echo esc_html($policy->policy_type); ?>
+                </div>
+                <div style="color: #6c757d; font-size: 14px; margin-bottom: 5px;">
+                    Müşteri: <?php echo esc_html($policy->first_name . ' ' . $policy->last_name); ?> | 
+                    Temsilci: <?php echo esc_html($policy->rep_first_name . ' ' . $policy->rep_last_name); ?>
+                </div>
+                <div style="font-size: 12px; color: #f39c12; font-weight: 600;">
+                    Bitiş Tarihi: <?php echo date('d.m.Y', strtotime($policy->end_date)); ?>
+                    <?php 
+                    $days_left = ceil((strtotime($policy->end_date) - time()) / (60 * 60 * 24));
+                    echo " ({$days_left} gün kaldı)";
+                    if ($days_left <= 7) {
+                        echo " - ACİL!";
+                    }
+                    ?>
                 </div>
             </div>
         <?php endforeach; ?>
         
-        <?php if (count($variables['all_expiring_policies']) > 10): ?>
-            <p style="text-align: center; color: #666; font-style: italic; margin-top: 15px;">
-                ... ve <?php echo count($variables['all_expiring_policies']) - 10; ?> adet daha
-            </p>
+        <?php if (count($variables['all_expiring_policies']) > 8): ?>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="<?php echo home_url('/temsilci-paneli/?section=policies'); ?>" 
+                   style="color: #667eea; text-decoration: none; font-weight: 600;">
+                    +<?php echo count($variables['all_expiring_policies']) - 8; ?> poliçeyi daha göster
+                </a>
+            </div>
         <?php endif; ?>
     <?php else: ?>
-        <p style="color: #28a745; text-align: center; padding: 20px;">
-            ✅ Önümüzdeki 30 gün içinde yenilenecek poliçe bulunmuyor.
-        </p>
+        <div style="text-align: center; padding: 30px; color: #28a745;">
+            <div style="font-size: 48px; margin-bottom: 10px;">✓</div>
+            <div style="font-weight: 600;">Önümüzdeki 30 gün içinde yenilenecek poliçe bulunmuyor</div>
+        </div>
     <?php endif; ?>
 </div>
 
-<!-- Representative Performance Summary -->
+<!-- Current Month Representative Performance -->
 <?php if (!empty($variables['representative_performance'])): ?>
 <div class="info-card">
-    <h3 style="color: #6f42c1;">👥 Temsilci Performans Özeti</h3>
+    <h3 style="color: #6f42c1; margin-bottom: 20px;">Bu Ay Temsilci Performans Özeti</h3>
     <div style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
             <thead>
                 <tr style="background-color: #f8f9fa;">
-                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Temsilci</th>
-                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">Aktif Poliçe</th>
-                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">Bekleyen Görev</th>
-                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">Durum</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left; font-weight: 600;">Temsilci</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Bu Ay Poliçe</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Bu Ay Prim</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Hedef %</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Bekleyen Görev</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Durum</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach (array_slice($variables['representative_performance'], 0, 10) as $rep): ?>
                     <tr>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600;">
                             <?php echo esc_html($rep->first_name . ' ' . $rep->last_name); ?>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">
-                            <span style="color: #28a745; font-weight: bold;"><?php echo $rep->policy_count; ?></span>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                            <span style="color: #28a745; font-weight: bold; font-size: 16px;"><?php echo $rep->monthly_policies; ?></span>
+                            <?php if ($rep->minimum_policy_count > 0): ?>
+                                <div style="font-size: 11px; color: #6c757d;">/ <?php echo $rep->minimum_policy_count; ?></div>
+                            <?php endif; ?>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">
-                            <span style="color: <?php echo $rep->pending_task_count > 5 ? '#dc3545' : '#6c757d'; ?>; font-weight: bold;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                            <span style="color: #17a2b8; font-weight: bold;">
+                                <?php echo number_format($rep->monthly_premium, 0, ',', '.') . ' ₺'; ?>
+                            </span>
+                        </td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                            <?php 
+                            $policy_percentage = 0;
+                            if ($rep->minimum_policy_count > 0) {
+                                $policy_percentage = min(100, ($rep->monthly_policies / $rep->minimum_policy_count) * 100);
+                            }
+                            $color = $policy_percentage >= 100 ? '#28a745' : ($policy_percentage >= 70 ? '#ffc107' : '#dc3545');
+                            ?>
+                            <span style="color: <?php echo $color; ?>; font-weight: bold;">
+                                %<?php echo number_format($policy_percentage, 0); ?>
+                            </span>
+                        </td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                            <span style="color: <?php echo $rep->pending_task_count > 10 ? '#dc3545' : ($rep->pending_task_count > 5 ? '#ffc107' : '#28a745'); ?>; font-weight: bold;">
                                 <?php echo $rep->pending_task_count; ?>
                             </span>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
                             <?php if ($rep->pending_task_count > 10): ?>
-                                <span style="color: #dc3545;">⚠️ Yoğun</span>
+                                <span style="color: #dc3545; font-weight: 600;">Yoğun</span>
                             <?php elseif ($rep->pending_task_count > 5): ?>
-                                <span style="color: #ffc107;">⚡ Normal</span>
+                                <span style="color: #ffc107; font-weight: 600;">Normal</span>
                             <?php else: ?>
-                                <span style="color: #28a745;">✅ İyi</span>
+                                <span style="color: #28a745; font-weight: 600;">İyi</span>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -216,77 +278,55 @@ if (!defined('ABSPATH')) {
         </table>
         
         <?php if (count($variables['representative_performance']) > 10): ?>
-            <p style="text-align: center; color: #666; font-style: italic; margin-top: 10px;">
-                ... ve <?php echo count($variables['representative_performance']) - 10; ?> temsilci daha
-            </p>
+            <div style="text-align: center; margin-top: 15px; color: #6c757d; font-style: italic;">
+                +<?php echo count($variables['representative_performance']) - 10; ?> temsilci daha
+            </div>
         <?php endif; ?>
     </div>
 </div>
 <?php endif; ?>
 
-<!-- Tasks by Representative -->
-<?php if (!empty($variables['pending_tasks_by_rep'])): ?>
-<div class="info-card">
-    <h3 style="color: #17a2b8;">📋 Temsilcilere Göre Bekleyen Görevler</h3>
-    <?php foreach (array_slice($variables['pending_tasks_by_rep'], 0, 8) as $rep): ?>
-        <div class="info-row">
-            <span class="info-label"><?php echo esc_html($rep->first_name . ' ' . $rep->last_name); ?>:</span>
-            <span class="info-value" style="color: <?php echo $rep->task_count > 10 ? '#dc3545' : '#6c757d'; ?>; font-weight: bold;">
-                <?php echo $rep->task_count; ?> görev
-                <?php if ($rep->task_count > 10): ?>
-                    ⚠️
-                <?php endif; ?>
-            </span>
-        </div>
-    <?php endforeach; ?>
-</div>
-<?php endif; ?>
-
-<!-- Quick Action Links -->
+<!-- Quick Access Links -->
 <div class="info-card" style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-    <h3 style="color: white; margin-bottom: 20px;">🚀 Yönetim Paneli Erişim</h3>
+    <h3 style="color: white; margin-bottom: 20px;">Yönetim Paneli Erişim</h3>
     <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-        <a href="<?php echo admin_url('admin.php?page=insurance-crm-dashboard'); ?>" 
-           class="button" 
-           style="background-color: rgba(255,255,255,0.2); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3);">
-            📊 Ana Panel
+        <a href="<?php echo home_url('/temsilci-paneli/'); ?>" 
+           style="background-color: rgba(255,255,255,0.2); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); font-weight: 600;">
+            Ana Panel
         </a>
-        <a href="<?php echo admin_url('admin.php?page=insurance-crm-tasks'); ?>" 
-           class="button" 
-           style="background-color: rgba(255,255,255,0.2); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3);">
-            📋 Tüm Görevler
+        <a href="<?php echo home_url('/temsilci-paneli/?section=tasks'); ?>" 
+           style="background-color: rgba(255,255,255,0.2); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); font-weight: 600;">
+            Tüm Görevler
         </a>
-        <a href="<?php echo admin_url('admin.php?page=insurance-crm-policies'); ?>" 
-           class="button" 
-           style="background-color: rgba(255,255,255,0.2); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3);">
-            📄 Poliçeler
+        <a href="<?php echo home_url('/temsilci-paneli/?section=policies'); ?>" 
+           style="background-color: rgba(255,255,255,0.2); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); font-weight: 600;">
+            Poliçeler
         </a>
-        <a href="<?php echo admin_url('admin.php?page=insurance-crm-reports'); ?>" 
-           class="button" 
-           style="background-color: rgba(255,255,255,0.2); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3);">
-            📈 Raporlar
+        <a href="<?php echo home_url('/temsilci-paneli/?section=reports'); ?>" 
+           style="background-color: rgba(255,255,255,0.2); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); font-weight: 600;">
+            Raporlar
         </a>
     </div>
 </div>
 
 <!-- Summary Footer -->
-<div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
-    <h4 style="color: #495057; margin-bottom: 15px;">📋 Günlük Özet</h4>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
-        <div>
-            <strong style="color: #dc3545;">{total_pending_tasks}</strong>
-            <br><small>Bekleyen Görev</small>
+<div style="text-align: center; margin-top: 30px; padding: 25px; background-color: #f8f9fa; border-radius: 8px;">
+    <h4 style="color: #495057; margin-bottom: 20px; font-size: 18px;">Günlük Özet</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; margin-bottom: 20px;">
+        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 24px; font-weight: bold; color: #dc3545; margin-bottom: 5px;">{total_pending_tasks}</div>
+            <div style="font-size: 14px; color: #6c757d;">Bekleyen Görev</div>
         </div>
-        <div>
-            <strong style="color: #f39c12;">{total_expiring_policies}</strong>
-            <br><small>Yenilenecek Poliçe</small>
+        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 24px; font-weight: bold; color: #f39c12; margin-bottom: 5px;">{total_expiring_policies}</div>
+            <div style="font-size: 14px; color: #6c757d;">Yenilenecek Poliçe</div>
         </div>
-        <div>
-            <strong style="color: #28a745;">{total_active_representatives}</strong>
-            <br><small>Aktif Temsilci</small>
+        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 24px; font-weight: bold; color: #28a745; margin-bottom: 5px;">{total_active_representatives}</div>
+            <div style="font-size: 14px; color: #6c757d;">Aktif Temsilci</div>
         </div>
     </div>
     <p style="font-size: 14px; color: #6c757d; margin: 0;">
-        Başarılı bir gün geçirin ve ekibinizi yönlendirin! 💼
+        Başarılı bir gün geçirin ve ekibinizi yönlendirin.
     </p>
 </div>

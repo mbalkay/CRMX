@@ -48,7 +48,7 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         $variables = array(
             'representative_name' => $representative->display_name,
             'today_date' => date('d.m.Y'),
-            'today_day' => date('l', strtotime('today')),
+            'today_day' => $this->get_turkish_day_name(date('l')),
             'tasks_today_count' => count($data['tasks_today']),
             'tasks_upcoming_count' => count($data['tasks_upcoming']),
             'policies_expiring_count' => count($data['policies_expiring']),
@@ -58,7 +58,9 @@ class Insurance_CRM_Enhanced_Email_Notifications {
             'tasks_upcoming' => $data['tasks_upcoming'],
             'policies_expiring' => $data['policies_expiring'],
             'active_quotes' => $data['active_quotes'],
-            'quick_stats' => $data['quick_stats']
+            'quick_stats' => $data['quick_stats'],
+            'yesterday_stats' => $data['yesterday_stats'],
+            'goal_tracking' => $data['goal_tracking']
         );
         
         // Get email template
@@ -110,15 +112,18 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         $variables = array(
             'manager_name' => $manager->display_name,
             'today_date' => date('d.m.Y'),
-            'today_day' => date('l', strtotime('today')),
+            'today_day' => $this->get_turkish_day_name(date('l')),
             'total_pending_tasks' => count($data['all_pending_tasks']),
             'total_expiring_policies' => count($data['all_expiring_policies']),
             'total_active_representatives' => $data['total_active_representatives'],
             'system_stats' => $data['system_stats'],
             'critical_alerts' => $data['critical_alerts'],
             'representative_performance' => $data['representative_performance'],
+            'yesterday_performance' => $data['yesterday_performance'],
             'pending_tasks_by_rep' => $data['pending_tasks_by_rep'],
-            'expiring_policies_by_rep' => $data['expiring_policies_by_rep']
+            'expiring_policies_by_rep' => $data['expiring_policies_by_rep'],
+            'all_pending_tasks' => $data['all_pending_tasks'],
+            'all_expiring_policies' => $data['all_expiring_policies']
         );
         
         // Get email template
@@ -205,7 +210,7 @@ class Insurance_CRM_Enhanced_Email_Notifications {
             $user_id
         ));
         
-        // Quick stats
+        // Quick stats with financial data
         $data['quick_stats'] = array(
             'policies_this_month' => $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_policies p
@@ -229,6 +234,75 @@ class Insurance_CRM_Enhanced_Email_Notifications {
                 $user_id
             ))
         );
+        
+        // Yesterday's performance data
+        $data['yesterday_stats'] = array(
+            'new_customers' => $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_customers c
+                 WHERE c.representative_id = (
+                     SELECT id FROM {$wpdb->prefix}insurance_crm_representatives 
+                     WHERE user_id = %d AND status = 'active'
+                 )
+                 AND DATE(c.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)",
+                $user_id
+            )),
+            'sold_policies' => $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_policies p
+                 WHERE p.representative_id = (
+                     SELECT id FROM {$wpdb->prefix}insurance_crm_representatives 
+                     WHERE user_id = %d AND status = 'active'
+                 )
+                 AND DATE(p.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)",
+                $user_id
+            )),
+            'total_premium' => $wpdb->get_var($wpdb->prepare(
+                "SELECT COALESCE(SUM(p.premium_amount), 0) FROM {$wpdb->prefix}insurance_crm_policies p
+                 WHERE p.representative_id = (
+                     SELECT id FROM {$wpdb->prefix}insurance_crm_representatives 
+                     WHERE user_id = %d AND status = 'active'
+                 )
+                 AND DATE(p.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)",
+                $user_id
+            ))
+        );
+        
+        // Monthly goal tracking
+        $rep_data = $wpdb->get_row($wpdb->prepare(
+            "SELECT monthly_target, minimum_policy_count, minimum_premium_amount 
+             FROM {$wpdb->prefix}insurance_crm_representatives 
+             WHERE user_id = %d AND status = 'active'",
+            $user_id
+        ));
+        
+        $data['goal_tracking'] = array(
+            'monthly_target' => $rep_data ? $rep_data->monthly_target : 0,
+            'min_policy_count' => $rep_data ? $rep_data->minimum_policy_count : 10,
+            'min_premium_amount' => $rep_data ? $rep_data->minimum_premium_amount : 300000,
+            'current_month_policies' => $data['quick_stats']['policies_this_month'],
+            'current_month_premium' => $wpdb->get_var($wpdb->prepare(
+                "SELECT COALESCE(SUM(p.premium_amount), 0) FROM {$wpdb->prefix}insurance_crm_policies p
+                 WHERE p.representative_id = (
+                     SELECT id FROM {$wpdb->prefix}insurance_crm_representatives 
+                     WHERE user_id = %d AND status = 'active'
+                 )
+                 AND MONTH(p.created_at) = MONTH(CURDATE())
+                 AND YEAR(p.created_at) = YEAR(CURDATE())",
+                $user_id
+            ))
+        );
+        
+        // Calculate goal percentages
+        if ($data['goal_tracking']['min_policy_count'] > 0) {
+            $data['goal_tracking']['policy_goal_percentage'] = min(100, ($data['goal_tracking']['current_month_policies'] / $data['goal_tracking']['min_policy_count']) * 100);
+        } else {
+            $data['goal_tracking']['policy_goal_percentage'] = 0;
+        }
+        
+        if ($data['goal_tracking']['min_premium_amount'] > 0) {
+            $data['goal_tracking']['premium_goal_percentage'] = min(100, ($data['goal_tracking']['current_month_premium'] / $data['goal_tracking']['min_premium_amount']) * 100);
+        } else {
+            $data['goal_tracking']['premium_goal_percentage'] = 0;
+        }
         
         return $data;
     }
@@ -288,17 +362,41 @@ class Insurance_CRM_Enhanced_Email_Notifications {
             $data['critical_alerts'][] = $expiring_today . ' adet poliçe bugün sona eriyor.';
         }
         
-        // Representative performance summary
+        // Representative performance summary with financial data
         $data['representative_performance'] = $wpdb->get_results(
-            "SELECT r.first_name, r.last_name, 
+            "SELECT r.first_name, r.last_name, r.monthly_target, r.minimum_policy_count, r.minimum_premium_amount,
                     COUNT(DISTINCT p.id) as policy_count,
-                    COUNT(DISTINCT t.id) as pending_task_count
+                    COUNT(DISTINCT t.id) as pending_task_count,
+                    COALESCE(SUM(p.premium_amount), 0) as total_premium,
+                    COUNT(DISTINCT pm.id) as monthly_policies,
+                    COALESCE(SUM(pm.premium_amount), 0) as monthly_premium
              FROM {$wpdb->prefix}insurance_crm_representatives r
              LEFT JOIN {$wpdb->prefix}insurance_crm_policies p ON r.id = p.representative_id AND p.status = 'aktif'
+             LEFT JOIN {$wpdb->prefix}insurance_crm_policies pm ON r.id = pm.representative_id 
+                 AND pm.status = 'aktif' 
+                 AND MONTH(pm.created_at) = MONTH(CURDATE()) 
+                 AND YEAR(pm.created_at) = YEAR(CURDATE())
              LEFT JOIN {$wpdb->prefix}insurance_crm_tasks t ON r.id = t.representative_id AND t.status = 'pending'
              WHERE r.status = 'active'
              GROUP BY r.id
-             ORDER BY policy_count DESC"
+             ORDER BY monthly_policies DESC, total_premium DESC"
+        );
+        
+        // Yesterday's performance by representative
+        $data['yesterday_performance'] = $wpdb->get_results(
+            "SELECT r.first_name, r.last_name,
+                    COUNT(DISTINCT c.id) as new_customers,
+                    COUNT(DISTINCT p.id) as sold_policies,
+                    COALESCE(SUM(p.premium_amount), 0) as premium_total
+             FROM {$wpdb->prefix}insurance_crm_representatives r
+             LEFT JOIN {$wpdb->prefix}insurance_crm_customers c ON r.id = c.representative_id 
+                 AND DATE(c.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+             LEFT JOIN {$wpdb->prefix}insurance_crm_policies p ON r.id = p.representative_id 
+                 AND DATE(p.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+             WHERE r.status = 'active'
+             GROUP BY r.id
+             HAVING (new_customers > 0 OR sold_policies > 0)
+             ORDER BY premium_total DESC, sold_policies DESC"
         );
         
         // Pending tasks by representative
@@ -442,5 +540,29 @@ class Insurance_CRM_Enhanced_Email_Notifications {
             <h3>📊 Sistem İstatistikleri</h3>
             <p>Aktif temsilci sayısı: {total_active_representatives}</p>
         </div>';
+    }
+    
+    /**
+     * Get Turkish day name
+     */
+    private function get_turkish_day_name($english_day) {
+        $days = array(
+            'Monday' => 'Pazartesi',
+            'Tuesday' => 'Salı', 
+            'Wednesday' => 'Çarşamba',
+            'Thursday' => 'Perşembe',
+            'Friday' => 'Cuma',
+            'Saturday' => 'Cumartesi',
+            'Sunday' => 'Pazar'
+        );
+        
+        return isset($days[$english_day]) ? $days[$english_day] : $english_day;
+    }
+    
+    /**
+     * Format currency for display
+     */
+    private function format_currency($amount) {
+        return number_format($amount, 2, ',', '.') . ' ₺';
     }
 }
