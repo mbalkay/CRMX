@@ -1,8 +1,8 @@
 <?php
 /**
- * License Restriction Page Template
+ * Frontend License Restriction Page Template
  * 
- * Modern and user-friendly restriction page with enhanced messaging
+ * Modern and user-friendly restriction page for representative panel
  * 
  * @package Insurance_CRM
  * @author  Anadolu Birlik
@@ -13,16 +13,21 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Get restriction details from URL parameters or transient
-$restriction_type = isset($_GET['restriction']) ? sanitize_text_field($_GET['restriction']) : 'data';
-$module = isset($_GET['module']) ? sanitize_text_field($_GET['module']) : '';
-
-// Try to get detailed restriction info from transient
-$restriction_details = null;
-if (!empty($module)) {
-    $restriction_details = get_transient('insurance_crm_restriction_details_' . get_current_user_id());
-    delete_transient('insurance_crm_restriction_details_' . get_current_user_id());
+// Ensure user is logged in
+if (!is_user_logged_in()) {
+    wp_safe_redirect(home_url('/temsilci-girisi/'));
+    exit;
 }
+
+$user = wp_get_current_user();
+if (!in_array('insurance_representative', (array)$user->roles)) {
+    wp_safe_redirect(home_url());
+    exit;
+}
+
+// Get restriction details from URL parameters
+$restriction_type = isset($_GET['restriction']) ? sanitize_text_field($_GET['restriction']) : 'module';
+$module = isset($_GET['module']) ? sanitize_text_field($_GET['module']) : '';
 
 // Get license info
 global $insurance_crm_license_manager;
@@ -35,29 +40,25 @@ $sub_message = '';
 $icon_class = 'fas fa-lock';
 $container_class = 'license-restriction-general';
 
-if ($restriction_type === 'module' && $restriction_details) {
-    // Enhanced module restriction
-    $page_title = $restriction_details['title'];
-    $main_message = $restriction_details['message'];
-    $sub_message = $restriction_details['upgrade_message'];
-    $icon_class = 'fas fa-puzzle-piece';
-    $container_class = 'license-restriction-module';
-} elseif ($restriction_type === 'module' && !empty($module)) {
-    // Basic module restriction
+if ($restriction_type === 'module' && !empty($module)) {
+    // Module restriction
     $module_names = array(
         'dashboard' => 'Dashboard',
         'customers' => 'Müşteriler',
         'policies' => 'Poliçeler',
-        'quotes' => 'Teklifler',
+        'offers' => 'Teklifler',
         'tasks' => 'Görevler',
         'reports' => 'Raporlar',
-        'data_transfer' => 'Veri Aktarımı'
+        'veri_aktar' => 'Veri Aktarımı',
+        'veri_aktar_facebook' => 'Facebook Veri Aktarımı',
+        'iceri_aktarim' => 'İçeri Aktarım',
+        'import-system' => 'İmport Sistemi'
     );
     
     $module_name = isset($module_names[$module]) ? $module_names[$module] : $module;
     $page_title = 'Modül Erişimi Kısıtlı';
-    $main_message = sprintf('Bu modüle (%s) erişim için lisansınız yeterli değil.', $module_name);
-    $sub_message = 'Lütfen lisansınızı yükseltin veya uygun modülleri içeren bir lisans satın alın.';
+    $main_message = sprintf('Lisansınız bu modülü (%s) içermiyor.', $module_name);
+    $sub_message = 'Lütfen lisansınızı güncelleyin veya uygun modülleri içeren bir lisans satın alın.';
     $icon_class = 'fas fa-puzzle-piece';
     $container_class = 'license-restriction-module';
 } elseif ($restriction_type === 'data') {
@@ -94,12 +95,12 @@ if ($restriction_type === 'module' && $restriction_details) {
 // Generate contact and support information
 $support_links = array(
     'license_page' => array(
-        'url' => admin_url('admin.php?page=insurance-crm-license'),
+        'url' => generate_panel_url('license-management'),
         'text' => 'Lisans Yönetimine Git',
         'class' => 'button-primary'
     ),
     'dashboard' => array(
-        'url' => admin_url('admin.php?page=insurance-crm'),
+        'url' => generate_panel_url('dashboard'),
         'text' => 'Ana Sayfaya Dön',
         'class' => 'button-secondary'
     )
@@ -107,7 +108,7 @@ $support_links = array(
 
 ?>
 
-<div class="wrap">
+<div class="main-content">
     <div class="license-restriction-container <?php echo esc_attr($container_class); ?>">
         <div class="restriction-header">
             <div class="restriction-icon">
@@ -172,7 +173,7 @@ $support_links = array(
                                 'dashboard' => 'Dashboard',
                                 'customers' => 'Müşteriler',
                                 'policies' => 'Poliçeler',
-                                'quotes' => 'Teklifler',
+                                'offers' => 'Teklifler',
                                 'tasks' => 'Görevler',
                                 'reports' => 'Raporlar',
                                 'data_transfer' => 'Veri Aktarımı'
@@ -365,6 +366,28 @@ $support_links = array(
     display: inline-block;
 }
 
+.button-primary {
+    background: #0073aa;
+    color: white;
+    border: none;
+}
+
+.button-primary:hover {
+    background: #005a87;
+    color: white;
+}
+
+.button-secondary {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.button-secondary:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
 .upgrade-suggestions {
     background: #e3f2fd;
     border-left: 4px solid #2196f3;
@@ -466,19 +489,20 @@ $support_links = array(
 </style>
 
 <script>
-jQuery(document).ready(function($) {
+document.addEventListener('DOMContentLoaded', function() {
     // Add some interactive behavior
-    $('.license-detail-item').hover(
-        function() {
-            $(this).css('background-color', '#f8f9fa');
-        },
-        function() {
-            $(this).css('background-color', 'transparent');
-        }
-    );
+    const detailItems = document.querySelectorAll('.license-detail-item');
+    detailItems.forEach(function(item) {
+        item.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+        item.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'transparent';
+        });
+    });
     
     // Auto-refresh check after 30 seconds on license page
-    if (window.location.href.indexOf('insurance-crm-license') > -1) {
+    if (window.location.href.indexOf('license-management') > -1) {
         setTimeout(function() {
             if (confirm('Lisans durumunu yeniden kontrol etmek ister misiniz?')) {
                 window.location.reload();
