@@ -62,6 +62,7 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         );
         
         // Get email template
+        $this->current_variables = $variables; // Store for template access
         $template_content = $this->get_representative_email_template();
         
         // Send email
@@ -121,6 +122,7 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         );
         
         // Get email template
+        $this->current_variables = $variables; // Store for template access
         $template_content = $this->get_manager_email_template();
         
         // Send email
@@ -333,6 +335,8 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         $template_file = dirname(__FILE__) . '/email-templates/representative-daily-summary.php';
         if (file_exists($template_file)) {
             ob_start();
+            // Make variables available to template
+            $variables = isset($this->current_variables) ? $this->current_variables : array();
             include $template_file;
             return ob_get_clean();
         }
@@ -349,6 +353,8 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         $template_file = dirname(__FILE__) . '/email-templates/manager-daily-report.php';
         if (file_exists($template_file)) {
             ob_start();
+            // Make variables available to template
+            $variables = isset($this->current_variables) ? $this->current_variables : array();
             include $template_file;
             return ob_get_clean();
         }
@@ -361,12 +367,30 @@ class Insurance_CRM_Enhanced_Email_Notifications {
      * Send template email
      */
     private function send_template_email($to, $subject, $template_content, $variables = array()) {
-        // Include email templates functionality
-        if (!function_exists('insurance_crm_send_template_email')) {
-            require_once ABSPATH . 'wp-content/plugins/insurance-crm/includes/email-templates.php';
+        // Include enhanced email base template for daily notifications
+        require_once dirname(__FILE__) . '/email-templates/email-base-template.php';
+        
+        // Use enhanced base template for daily notifications
+        $base_template = insurance_crm_get_daily_email_base_template();
+        
+        // Replace content in base template
+        $email_html = str_replace('{email_content}', $template_content, $base_template);
+        $email_html = str_replace('{email_subject}', esc_html($subject), $email_html);
+        
+        // Replace variables in final email
+        foreach ($variables as $key => $value) {
+            if (is_string($value) || is_numeric($value)) {
+                $email_html = str_replace('{' . $key . '}', esc_html($value), $email_html);
+            }
         }
         
-        return insurance_crm_send_template_email($to, $subject, $template_content, $variables);
+        // Set headers for HTML email
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . get_bloginfo('name') . ' <' . get_bloginfo('admin_email') . '>'
+        );
+        
+        return wp_mail($to, $subject, $email_html, $headers);
     }
     
     /**

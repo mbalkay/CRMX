@@ -81,6 +81,9 @@ class Insurance_CRM_Notification_Scheduler {
             return;
         }
         
+        // Ensure required table columns exist
+        $this->ensure_representative_columns();
+        
         // Get enhanced notifications class
         require_once dirname(__FILE__) . '/class-enhanced-email-notifications.php';
         $notifications = new Insurance_CRM_Enhanced_Email_Notifications();
@@ -138,6 +141,29 @@ class Insurance_CRM_Notification_Scheduler {
         
         // Optional: Store statistics
         $this->update_notification_stats($sent_count, $error_count);
+    }
+
+    /**
+     * Ensure representative_id columns exist in required tables
+     */
+    private function ensure_representative_columns() {
+        global $wpdb;
+        
+        // Check and add representative_id to policies table
+        $policies_column = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_policies LIKE 'representative_id'");
+        if (empty($policies_column)) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_policies ADD COLUMN representative_id bigint(20) DEFAULT NULL");
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_policies ADD KEY representative_id (representative_id)");
+            error_log("Insurance CRM: Added representative_id column to policies table");
+        }
+        
+        // Check and add representative_id to tasks table
+        $tasks_column = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_tasks LIKE 'representative_id'");
+        if (empty($tasks_column)) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_tasks ADD COLUMN representative_id bigint(20) DEFAULT NULL");
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_tasks ADD KEY representative_id (representative_id)");
+            error_log("Insurance CRM: Added representative_id column to tasks table");
+        }
     }
 
     /**
