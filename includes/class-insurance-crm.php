@@ -73,8 +73,18 @@ class Insurance_CRM {
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/models/class-insurance-crm-policy.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/models/class-insurance-crm-task.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/models/class-insurance-crm-reports.php';
+        
+        // Include notification handlers
+        if (file_exists(plugin_dir_path(dirname(__FILE__)) . 'includes/notifications/manual-email-handler.php')) {
+            require_once plugin_dir_path(dirname(__FILE__)) . 'includes/notifications/manual-email-handler.php';
+        }
 
         $this->loader = new Insurance_CRM_Loader();
+        
+        // Add notification hooks
+        $this->loader->add_action('insurance_crm_policy_created', null, 'insurance_crm_send_new_policy_notification', 10, 1);
+        $this->loader->add_action('insurance_crm_customer_created', null, 'insurance_crm_send_new_customer_notification', 10, 1);
+        $this->loader->add_action('insurance_crm_task_created', null, 'insurance_crm_send_new_task_notification', 10, 1);
     }
 
     /**

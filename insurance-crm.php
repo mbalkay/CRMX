@@ -303,6 +303,24 @@ function run_insurance_crm() {
 run_insurance_crm();
 
 /**
+ * Initialize Enhanced Daily Email Notifications
+ */
+function insurance_crm_init_daily_notifications() {
+    // Load enhanced notification classes
+    require_once plugin_dir_path(__FILE__) . 'includes/notifications/class-notification-scheduler.php';
+    require_once plugin_dir_path(__FILE__) . 'includes/notifications/class-enhanced-email-notifications.php';
+    
+    // Load validation file (admin only)
+    if (is_admin()) {
+        require_once plugin_dir_path(__FILE__) . 'includes/notifications/validation.php';
+    }
+    
+    // Initialize notification scheduler
+    new Insurance_CRM_Notification_Scheduler();
+}
+add_action('init', 'insurance_crm_init_daily_notifications', 15);
+
+/**
  * Custom capabilities for the plugin
  */
 function insurance_crm_add_capabilities() {

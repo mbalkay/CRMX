@@ -173,6 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['notifications_submit']
     $email_notifications = isset($_POST['email_notifications']) ? 1 : 0;
     $browser_notifications = isset($_POST['browser_notifications']) ? 1 : 0;
     $mobile_notifications = isset($_POST['mobile_notifications']) ? 1 : 0;
+    $daily_email_notifications = isset($_POST['daily_email_notifications']) ? 1 : 0;
     $notification_days_before = isset($_POST['notification_days_before']) ? intval($_POST['notification_days_before']) : 7;
     
     // Kullanıcı meta bilgilerine bildirim tercihlerini kaydet
@@ -183,6 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['notifications_submit']
     update_user_meta($current_user->ID, 'crm_email_notifications', $email_notifications);
     update_user_meta($current_user->ID, 'crm_browser_notifications', $browser_notifications);
     update_user_meta($current_user->ID, 'crm_mobile_notifications', $mobile_notifications);
+    update_user_meta($current_user->ID, 'crm_daily_email_notifications', $daily_email_notifications);
     update_user_meta($current_user->ID, 'crm_notification_days_before', $notification_days_before);
     
     $success_message = 'Bildirim ayarlarınız başarıyla güncellendi.';
@@ -203,6 +205,7 @@ $notify_task_due = get_user_meta($current_user->ID, 'crm_notify_task_due', true)
 $email_notifications = get_user_meta($current_user->ID, 'crm_email_notifications', true) ?: 1;
 $browser_notifications = get_user_meta($current_user->ID, 'crm_browser_notifications', true) ?: 0;
 $mobile_notifications = get_user_meta($current_user->ID, 'crm_mobile_notifications', true) ?: 0;
+$daily_email_notifications = get_user_meta($current_user->ID, 'crm_daily_email_notifications', true) ?: 1;
 $notification_days_before = get_user_meta($current_user->ID, 'crm_notification_days_before', true) ?: 7;
 ?>
 
@@ -475,6 +478,14 @@ $notification_days_before = get_user_meta($current_user->ID, 'crm_notification_d
                                         <span>Mobil Uygulama Bildirimleri</span>
                                     </label>
                                     <p class="option-tip">Mobil uygulamayı yüklemeniz gerekir</p>
+                                </div>
+                                
+                                <div class="notification-option daily-email-option">
+                                    <label>
+                                        <input type="checkbox" name="daily_email_notifications" value="1" <?php checked($daily_email_notifications); ?>>
+                                        <span>📊 Günlük E-posta Özeti</span>
+                                    </label>
+                                    <p class="option-tip">Her sabah 8:00'de günlük özet raporu alın</p>
                                 </div>
                             </div>
                         </div>
@@ -941,6 +952,68 @@ textarea:focus {
     font-style: italic;
 }
 
+/* Günlük e-posta özel stilleri */
+.daily-email-option {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 15px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.daily-email-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.daily-email-option::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.3;
+}
+
+.daily-email-option label {
+    color: white;
+    position: relative;
+    z-index: 2;
+    font-weight: 600;
+}
+
+.daily-email-option span {
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.daily-email-option .option-tip {
+    color: rgba(255, 255, 255, 0.85);
+    margin-left: 0;
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 400;
+    position: relative;
+    z-index: 2;
+}
+
+.daily-email-option input[type="checkbox"] {
+    accent-color: #ffffff;
+    transform: scale(1.1);
+}
+
+.daily-email-option input[type="checkbox"]:checked {
+    filter: brightness(1.2);
+}
+
 .notification-timing-row {
     display: flex;
     align-items: center;
@@ -1069,6 +1142,23 @@ jQuery(document).ready(function($) {
         var target = $(this).attr('href').substring(1);
         $('.tab-content').removeClass('active');
         $('#' + target).addClass('active');
+    });
+    
+    // Günlük e-posta seçeneği için özel davranış
+    $('.daily-email-option input[type="checkbox"]').on('change', function() {
+        var isChecked = $(this).is(':checked');
+        var container = $(this).closest('.daily-email-option');
+        
+        if (isChecked) {
+            container.addClass('checked');
+            // Mini animation
+            container.css('transform', 'scale(1.02)');
+            setTimeout(function() {
+                container.css('transform', '');
+            }, 200);
+        } else {
+            container.removeClass('checked');
+        }
     });
     
     // Panel önizlemesi için renkleri güncelle
