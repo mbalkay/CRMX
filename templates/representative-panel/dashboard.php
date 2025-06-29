@@ -9230,7 +9230,7 @@ window.addEventListener('resize', function() {
                     position: fixed !important;
                     top: 60px !important;
                     right: 10px !important;
-                    left: 10px !important;
+                    left: 70px !important;
                     width: auto !important;
                     max-height: 70vh;
                     overflow-y: auto;
@@ -9246,7 +9246,7 @@ window.addEventListener('resize', function() {
                     position: fixed !important;
                     top: 60px !important;
                     right: 10px !important;
-                    left: 10px !important;
+                    left: 70px !important;
                     width: auto !important;
                 }
                 
@@ -9569,7 +9569,7 @@ window.addEventListener('resize', function() {
                 .quick-add-dropdown {
                     top: 50px !important;
                     right: 5px !important;
-                    left: 5px !important;
+                    left: 70px !important;
                 }
                 
                 .modal-content {
