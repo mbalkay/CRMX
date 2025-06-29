@@ -104,7 +104,7 @@ if (!class_exists('Insurance_CRM_Admin')) {
                 $bypass_menu_exists = false;
                 if (isset($submenu['insurance-crm'])) {
                     foreach ($submenu['insurance-crm'] as $submenu_item) {
-                        if (isset($submenu_item[2]) && $submenu_item[2] === 'insurance-crm-license-bypass') {
+                        if (isset($submenu_item[2]) && $submenu_item[2] === 'license-bypass-control') {
                             $bypass_menu_exists = true;
                             break;
                         }
@@ -118,7 +118,7 @@ if (!class_exists('Insurance_CRM_Admin')) {
                         'Lisans Bypass Kontrolü',
                         '🔧 Bypass Kontrolü',
                         'manage_options',
-                        'insurance-crm-license-bypass',
+                        'license-bypass-control',
                         array($this, 'display_license_bypass_page')
                     );
                 }
@@ -211,7 +211,7 @@ if (!class_exists('Insurance_CRM_Admin')) {
                     'Lisans Bypass Kontrolü',
                     '🔧 Bypass Kontrolü',
                     'manage_options',
-                    'insurance-crm-license-bypass',
+                    'license-bypass-control',
                     array($this, 'display_license_bypass_page')
                 );
             }
