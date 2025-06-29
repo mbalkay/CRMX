@@ -136,7 +136,7 @@ if (!defined('ABSPATH')) {
 <?php endif; ?>
 
 <!-- Expiring Policies -->
-<?php if (!empty($variables['policies_expiring'])): ?>
+<?php if (!empty($variables['policies_expiring']) && count($variables['policies_expiring']) > 0): ?>
 <div class="info-card">
     <h3 style="color: #f39c12; margin-bottom: 15px;">Yaklaşan Poliçe Yenilemeleri (<?php echo count($variables['policies_expiring']); ?>)</h3>
     <?php foreach (array_slice($variables['policies_expiring'], 0, 5) as $policy): ?>

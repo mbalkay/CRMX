@@ -79,7 +79,7 @@ if (!defined('ABSPATH')) {
 <?php endif; ?>
 
 <!-- Yesterday's Performance Summary -->
-<?php if (!empty($variables['yesterday_performance'])): ?>
+<?php if (!empty($variables['yesterday_performance']) && count($variables['yesterday_performance']) > 0): ?>
 <div class="info-card">
     <h3 style="color: #495057; margin-bottom: 20px;">Dünkü Temsilci Performansları</h3>
     <div style="overflow-x: auto;">
@@ -96,30 +96,35 @@ if (!defined('ABSPATH')) {
                 <?php foreach ($variables['yesterday_performance'] as $rep): ?>
                     <tr>
                         <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600;">
-                            <?php echo esc_html($rep->first_name . ' ' . $rep->last_name); ?>
+                            <?php 
+                            $name = '';
+                            if (!empty($rep->first_name) || !empty($rep->last_name)) {
+                                $name = trim($rep->first_name . ' ' . $rep->last_name);
+                            }
+                            if (empty($name) && !empty($rep->display_name)) {
+                                $name = $rep->display_name;
+                            }
+                            if (empty($name)) {
+                                $name = 'İsimsiz Temsilci';
+                            }
+                            echo esc_html($name);
+                            ?>
                         </td>
                         <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <span style="color: #28a745; font-weight: bold; font-size: 16px;"><?php echo $rep->new_customers; ?></span>
+                            <span style="color: #28a745; font-weight: bold; font-size: 16px;"><?php echo isset($rep->new_customers) ? intval($rep->new_customers) : 0; ?></span>
                         </td>
                         <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <span style="color: #17a2b8; font-weight: bold; font-size: 16px;"><?php echo $rep->sold_policies; ?></span>
+                            <span style="color: #17a2b8; font-weight: bold; font-size: 16px;"><?php echo isset($rep->sold_policies) ? intval($rep->sold_policies) : 0; ?></span>
                         </td>
                         <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
                             <span style="color: #6f42c1; font-weight: bold;">
-                                <?php echo number_format($rep->premium_total, 0, ',', '.') . ' ₺'; ?>
+                                <?php echo number_format(isset($rep->premium_total) ? floatval($rep->premium_total) : 0, 0, ',', '.') . ' ₺'; ?>
                             </span>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-</div>
-<?php else: ?>
-<div class="info-card">
-    <h3 style="color: #6c757d;">Dünkü Temsilci Performansları</h3>
-    <div style="text-align: center; padding: 30px; color: #6c757d;">
-        Dün herhangi bir satış veya müşteri kaydı gerçekleşmemiş.
     </div>
 </div>
 <?php endif; ?>
@@ -214,7 +219,7 @@ if (!defined('ABSPATH')) {
 </div>
 
 <!-- Current Month Representative Performance -->
-<?php if (!empty($variables['representative_performance'])): ?>
+<?php if (!empty($variables['representative_performance']) && count($variables['representative_performance']) > 0): ?>
 <div class="info-card">
     <h3 style="color: #6f42c1; margin-bottom: 20px;">Bu Ay Temsilci Performans Özeti</h3>
     <div style="overflow-x: auto;">
@@ -233,24 +238,39 @@ if (!defined('ABSPATH')) {
                 <?php foreach (array_slice($variables['representative_performance'], 0, 10) as $rep): ?>
                     <tr>
                         <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600;">
-                            <?php echo esc_html($rep->first_name . ' ' . $rep->last_name); ?>
+                            <?php 
+                            $name = '';
+                            if (!empty($rep->first_name) || !empty($rep->last_name)) {
+                                $name = trim($rep->first_name . ' ' . $rep->last_name);
+                            }
+                            if (empty($name) && !empty($rep->display_name)) {
+                                $name = $rep->display_name;
+                            }
+                            if (empty($name)) {
+                                $name = 'İsimsiz Temsilci';
+                            }
+                            echo esc_html($name);
+                            ?>
                         </td>
                         <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <span style="color: #28a745; font-weight: bold; font-size: 16px;"><?php echo $rep->monthly_policies; ?></span>
-                            <?php if ($rep->minimum_policy_count > 0): ?>
-                                <div style="font-size: 11px; color: #6c757d;">/ <?php echo $rep->minimum_policy_count; ?></div>
+                            <span style="color: #28a745; font-weight: bold; font-size: 16px;"><?php echo isset($rep->monthly_policies) ? intval($rep->monthly_policies) : 0; ?></span>
+                            <?php if (isset($rep->minimum_policy_count) && $rep->minimum_policy_count > 0): ?>
+                                <div style="font-size: 11px; color: #6c757d;">/ <?php echo intval($rep->minimum_policy_count); ?></div>
                             <?php endif; ?>
                         </td>
                         <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
                             <span style="color: #17a2b8; font-weight: bold;">
-                                <?php echo number_format($rep->monthly_premium, 0, ',', '.') . ' ₺'; ?>
+                                <?php echo number_format(isset($rep->monthly_premium) ? floatval($rep->monthly_premium) : 0, 0, ',', '.') . ' ₺'; ?>
                             </span>
                         </td>
                         <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
                             <?php 
                             $policy_percentage = 0;
-                            if ($rep->minimum_policy_count > 0) {
-                                $policy_percentage = min(100, ($rep->monthly_policies / $rep->minimum_policy_count) * 100);
+                            $monthly_policies = isset($rep->monthly_policies) ? intval($rep->monthly_policies) : 0;
+                            $min_policy_count = isset($rep->minimum_policy_count) ? intval($rep->minimum_policy_count) : 0;
+                            
+                            if ($min_policy_count > 0) {
+                                $policy_percentage = min(100, ($monthly_policies / $min_policy_count) * 100);
                             }
                             $color = $policy_percentage >= 100 ? '#28a745' : ($policy_percentage >= 70 ? '#ffc107' : '#dc3545');
                             ?>
@@ -259,14 +279,15 @@ if (!defined('ABSPATH')) {
                             </span>
                         </td>
                         <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <span style="color: <?php echo $rep->pending_task_count > 10 ? '#dc3545' : ($rep->pending_task_count > 5 ? '#ffc107' : '#28a745'); ?>; font-weight: bold;">
-                                <?php echo $rep->pending_task_count; ?>
+                            <?php $pending_tasks = isset($rep->pending_task_count) ? intval($rep->pending_task_count) : 0; ?>
+                            <span style="color: <?php echo $pending_tasks > 10 ? '#dc3545' : ($pending_tasks > 5 ? '#ffc107' : '#28a745'); ?>; font-weight: bold;">
+                                <?php echo $pending_tasks; ?>
                             </span>
                         </td>
                         <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <?php if ($rep->pending_task_count > 10): ?>
+                            <?php if ($pending_tasks > 10): ?>
                                 <span style="color: #dc3545; font-weight: 600;">Yoğun</span>
-                            <?php elseif ($rep->pending_task_count > 5): ?>
+                            <?php elseif ($pending_tasks > 5): ?>
                                 <span style="color: #ffc107; font-weight: 600;">Normal</span>
                             <?php else: ?>
                                 <span style="color: #28a745; font-weight: 600;">İyi</span>

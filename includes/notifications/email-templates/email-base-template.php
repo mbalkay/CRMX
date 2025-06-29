@@ -27,7 +27,7 @@ function insurance_crm_get_daily_email_base_template() {
     
     $logo_html = '';
     if (!empty($logo_url)) {
-        $logo_html = '<img src="' . esc_url($logo_url) . '" alt="' . esc_attr($company_name) . '" style="max-height: 60px; max-width: 300px; width: auto; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">';
+        $logo_html = '<img src="' . esc_url($logo_url) . '" alt="' . esc_attr($company_name) . '" style="max-height: 50px; max-width: 150px; width: auto; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">';
     }
     
     return '
