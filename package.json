@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run build:css && npm run build:js",
     "build:css": "npm run minify:css && npm run build:css-critical",
-    "build:js": "npm run minify:js && npm run build:js-modules", 
+    "build:js": "npm run minify:js && npm run build:js-modules",
     "minify:css": "cleancss -o assets/css/admin.min.css assets/css/admin.css && cleancss -o assets/css/representative-panel-global.min.css assets/css/representative-panel-global.css && cleancss -o public/css/representative-panel.min.css public/css/representative-panel.css",
     "minify:js": "terser assets/js/representative-panel.js -o assets/js/representative-panel.min.js -c -m && terser assets/js/dashboard-widgets.js -o assets/js/dashboard-widgets.min.js -c -m && terser public/js/representative-panel.js -o public/js/representative-panel.min.js -c -m",
     "build:css-critical": "node build/extract-critical-css.js",
@@ -22,20 +22,19 @@
     "dev": "npm run watch",
     "serve": "browser-sync start --proxy \"localhost\" --files \"**/*.css,**/*.js,**/*.php\""
   },
-  "dependencies": {},
   "devDependencies": {
-    "clean-css-cli": "^5.6.2",
-    "terser": "^5.19.2",
+    "autoprefixer": "^10.4.14",
+    "browser-sync": "^2.29.3",
     "chokidar-cli": "^3.0.0",
-    "stylelint": "^15.10.2",
-    "stylelint-config-standard": "^34.0.0",
-    "eslint": "^8.45.0",
+    "clean-css-cli": "^5.6.3",
+    "eslint": "^8.57.1",
     "imagemin": "^8.0.1",
     "imagemin-mozjpeg": "^10.0.0",
     "imagemin-pngquant": "^9.0.2",
-    "browser-sync": "^2.29.3",
     "postcss": "^8.4.27",
-    "autoprefixer": "^10.4.14"
+    "stylelint": "^15.11.0",
+    "stylelint-config-standard": "^34.0.0",
+    "terser": "^5.43.1"
   },
   "keywords": [
     "wordpress",
