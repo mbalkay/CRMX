@@ -1043,6 +1043,23 @@ function insurance_crm_add_sample_data() {
 register_activation_hook(__FILE__, 'insurance_crm_add_sample_data');
 
 /**
+ * Clear WordPress menu cache to ensure bypass menu appears
+ */
+function insurance_crm_clear_menu_cache() {
+    // Clear WordPress menu-related caches
+    delete_option('insurance_crm_menu_initialized');
+    delete_option('insurance_crm_menu_cache_cleared');
+    
+    // Clear any menu-related transients
+    global $wpdb;
+    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '%transient%menu%'");
+    
+    // Force WordPress to rebuild admin menu
+    wp_cache_delete('admin_menu', 'site-options');
+    wp_cache_delete('submenu', 'site-options');
+}
+
+/**
  * Plugin güncelleme kontrolü ve işlemleri
  */
 function insurance_crm_update_check() {
@@ -1052,6 +1069,9 @@ function insurance_crm_update_check() {
         delete_option('insurance_crm_menu_initialized');
         delete_option('insurance_crm_menu_cache_cleared');
         update_option('insurance_crm_version', INSURANCE_CRM_VERSION);
+        
+        // Clear menu cache to ensure bypass menu appears
+        insurance_crm_clear_menu_cache();
         
         global $wpdb;
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '%transient%menu%'");
