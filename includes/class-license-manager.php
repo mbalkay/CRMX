@@ -667,16 +667,18 @@ class Insurance_CRM_License_Manager {
 
         $allowed_modules = get_option('insurance_crm_license_modules', array());
         
-        // If no specific modules defined, deny access by default for security
-        // This ensures that only explicitly licensed modules are accessible
+        // If no specific modules defined, allow all modules (legacy compatibility)
+        // This ensures backward compatibility with existing licenses
         if (empty($allowed_modules)) {
-            error_log('[LISANS DEBUG] No licensed modules defined, denying access to module: ' . $module);
-            return false;
+            error_log('[LISANS DEBUG] No specific modules defined in license, allowing access to module: ' . $module);
+            return true;
         }
 
         $is_allowed = in_array($module, $allowed_modules);
         if (!$is_allowed) {
             error_log('[LISANS DEBUG] Module not in allowed list: ' . $module . '. Allowed: ' . implode(', ', $allowed_modules));
+        } else {
+            error_log('[LISANS DEBUG] Module access granted: ' . $module);
         }
         
         return $is_allowed;

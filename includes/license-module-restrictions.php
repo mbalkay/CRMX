@@ -176,7 +176,7 @@ class Insurance_CRM_Module_Restrictions {
         
         // Check if module exists
         if (!isset($this->available_modules[$module])) {
-            error_log('[LISANS DEBUG] Module not found: ' . $module);
+            error_log('[LISANS DEBUG] Module not found in available modules: ' . $module);
             return false;
         }
         
@@ -194,15 +194,21 @@ class Insurance_CRM_Module_Restrictions {
             return true;
         }
         
+        // If no license manager, allow access (this prevents blocking when system is not properly initialized)
+        if (!$insurance_crm_license_manager) {
+            error_log('[LISANS DEBUG] No license manager available, allowing access to module: ' . $module);
+            return true;
+        }
+        
         // Check basic license validity
-        if (!$insurance_crm_license_manager || !$insurance_crm_license_manager->can_access_data()) {
+        if (!$insurance_crm_license_manager->can_access_data()) {
             error_log('[LISANS DEBUG] Basic license check failed for module: ' . $module);
             return false;
         }
         
-        // Check if module is in licensed modules list
+        // Use the license manager's module check (which now properly handles empty module lists)
         if (!$insurance_crm_license_manager->is_module_allowed($module)) {
-            error_log('[LISANS DEBUG] Module not in licensed modules list: ' . $module);
+            error_log('[LISANS DEBUG] Module not allowed by license manager: ' . $module);
             return false;
         }
         

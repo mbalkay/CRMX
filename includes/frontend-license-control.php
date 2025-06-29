@@ -29,6 +29,7 @@ function insurance_crm_frontend_can_access_module($module) {
     
     // Check if license manager exists
     if (!$insurance_crm_license_manager) {
+        error_log('[LISANS DEBUG] Frontend: No license manager available, allowing access to module: ' . $module);
         return true; // Allow access if license manager is not available
     }
     
@@ -40,17 +41,15 @@ function insurance_crm_frontend_can_access_module($module) {
     
     // Check basic license validity
     if (!$insurance_crm_license_manager->can_access_data()) {
+        error_log('[LISANS DEBUG] Frontend: Basic license access failed for module: ' . $module);
         return false;
     }
     
-    // Use the existing module restrictions system
-    global $insurance_crm_module_restrictions;
-    if ($insurance_crm_module_restrictions) {
-        return $insurance_crm_module_restrictions->is_module_accessible($module);
-    }
+    // Use the license manager's module check directly (it now handles empty modules properly)
+    $is_allowed = $insurance_crm_license_manager->is_module_allowed($module);
+    error_log('[LISANS DEBUG] Frontend: Module ' . $module . ' access result: ' . ($is_allowed ? 'allowed' : 'denied'));
     
-    // Fallback to license manager's module check
-    return $insurance_crm_license_manager->is_module_allowed($module);
+    return $is_allowed;
 }
 
 /**
