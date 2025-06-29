@@ -381,79 +381,6 @@ function generate_team_detail_url($team_id) {
     return generate_panel_url('team_detail', '', '', array('team_id' => $team_id));
 }
 
-/**
- * Check if frontend module access is allowed
- * Shows license restriction page if access is denied
- * 
- * @param string $view_name Current view name
- * @return bool True if access allowed, false if restricted
- */
-function check_frontend_module_access($view_name) {
-    // Always allow access to dashboard, settings, notifications, and license-management
-    $always_allowed = array('dashboard', 'settings', 'notifications', 'license-management', 'license-restriction', 'search');
-    if (in_array($view_name, $always_allowed)) {
-        return true;
-    }
-    
-    // Map views to modules for license checking
-    $module_mapping = array(
-        'customers' => 'customers',
-        'team_customers' => 'customers',
-        'policies' => 'policies', 
-        'team_policies' => 'policies',
-        'offers' => 'quotes',
-        'offer-view' => 'quotes',
-        'tasks' => 'tasks',
-        'team_tasks' => 'tasks',
-        'reports' => 'reports',
-        'team_reports' => 'reports',
-        'veri_aktar' => 'data_transfer',
-        'veri_aktar_facebook' => 'data_transfer',
-        'iceri_aktarim' => 'data_transfer',
-        'iceri_aktarim_new' => 'data_transfer',
-        'import-system' => 'data_transfer',
-        'helpdesk' => 'dashboard', // Helpdesk is considered part of dashboard access
-        
-        // Organization/personnel views - these should be accessible if user has admin access or is team leader
-        'organization' => null, // No license restriction - check role instead
-        'all_personnel' => null,
-        'all_teams' => null,
-        'team_add' => null,
-        'representative_add' => null,
-        'boss_settings' => null,
-        'patron_dashboard' => null,
-        'representative_detail' => null,
-        'team_detail' => null,
-        'edit_representative' => null,
-        'edit_team' => null
-    );
-    
-    // If no module mapping exists, allow access (for admin/management functions)
-    if (!isset($module_mapping[$view_name])) {
-        return true;
-    }
-    
-    $module = $module_mapping[$view_name];
-    
-    // If module is null, it means no license restriction applies (admin/management functions)
-    if ($module === null) {
-        return true;
-    }
-    
-    // Check if module access is allowed
-    if (!insurance_crm_frontend_can_access_module($module)) {
-        // Redirect to show license restriction instead of including it directly
-        wp_safe_redirect(add_query_arg(array(
-            'view' => 'license-restriction',
-            'restriction' => 'module',
-            'module' => $module
-        ), get_permalink()));
-        exit;
-    }
-    
-    return true;
-}
-
 // Kullanıcının rolünü belirle
 $user_role = get_user_role_in_hierarchy($current_user->ID);
 
@@ -5865,67 +5792,45 @@ window.addEventListener('resize', function() {
         <?php elseif ($current_view == 'all_teams'): ?>
             <?php include_once(dirname(__FILE__) . '/all_teams.php'); ?>
         <?php elseif ($current_view == 'customers' || $current_view == 'team_customers'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <?php include_once(dirname(__FILE__) . '/customers.php'); ?>
-            <?php endif; ?>
+            <?php include_once(dirname(__FILE__) . '/customers.php'); ?>
         <?php elseif ($current_view == 'policies' || $current_view == 'team_policies'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <?php include_once(dirname(__FILE__) . '/policies.php'); ?>
-            <?php endif; ?>
+            <?php include_once(dirname(__FILE__) . '/policies.php'); ?>
         <?php elseif ($current_view == 'offers' || $current_view == 'offers'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <?php include_once(dirname(__FILE__) . '/offers.php'); ?>
-            <?php endif; ?>
+            <?php include_once(dirname(__FILE__) . '/offers.php'); ?>
         <?php elseif ($current_view == 'offer-view'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <?php include_once(dirname(__FILE__) . '/offer-view.php'); ?>
-            <?php endif; ?>
+            <?php include_once(dirname(__FILE__) . '/offer-view.php'); ?>
         <?php elseif ($current_view == 'helpdesk' || $current_view == 'helpdesk'): ?>
             <?php include_once(dirname(__FILE__) . '/helpdesk.php'); ?>
         <?php elseif ($current_view == 'license-management'): ?>
             <?php include_once(dirname(__FILE__) . '/license-management.php'); ?>
         <?php elseif ($current_view == 'tasks' || $current_view == 'team_tasks'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <?php include_once(dirname(__FILE__) . '/tasks.php'); ?>
-            <?php endif; ?>
+            <?php include_once(dirname(__FILE__) . '/tasks.php'); ?>
         <?php elseif ($current_view == 'helpdesk'): ?>
             <?php include_once(dirname(__FILE__) . '/helpdesk.php'); ?>
         <?php elseif ($current_view == 'reports' || $current_view == 'team_reports'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <?php include_once(dirname(__FILE__) . '/reports.php'); ?>
-            <?php endif; ?>
+            <?php include_once(dirname(__FILE__) . '/reports.php'); ?>
         <?php elseif ($current_view == 'settings'): ?>
             <?php include_once(dirname(__FILE__) . '/settings.php'); ?>
         <?php elseif ($current_view == 'notifications'): ?>
             <?php include_once(dirname(__FILE__) . '/notifications.php'); ?>
         <?php elseif ($current_view == 'veri_aktar'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <div class="main-content">
-                    <?php include_once(dirname(__FILE__) . '/veri_aktar.php'); ?>
-                </div>
-            <?php endif; ?>
+            <div class="main-content">
+                <?php include_once(dirname(__FILE__) . '/veri_aktar.php'); ?>
+            </div>
         <?php elseif ($current_view == 'veri_aktar_facebook'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <div class="main-content">
-                    <?php include_once(dirname(__FILE__) . '/veri_aktar_facebook.php'); ?>
-                </div>
-            <?php endif; ?>
+            <div class="main-content">
+                <?php include_once(dirname(__FILE__) . '/veri_aktar_facebook.php'); ?>
+            </div>
         <?php elseif ($current_view == 'iceri_aktarim'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <?php include_once(dirname(__FILE__) . '/importx.php'); ?>
-            <?php endif; ?>
+            <?php include_once(dirname(__FILE__) . '/importx.php'); ?>
         <?php elseif ($current_view == 'iceri_aktarim_new'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <div class="main-content">
-                    <?php include_once(dirname(__FILE__) . '/iceri_aktarim_new.php'); ?>
-                </div>
-            <?php endif; ?>
+            <div class="main-content">
+                <?php include_once(dirname(__FILE__) . '/iceri_aktarim_new.php'); ?>
+            </div>
         <?php elseif ($current_view == 'import-system'): ?>
-            <?php if (check_frontend_module_access($current_view)): ?>
-                <div class="main-content">
-                    <?php include_once(dirname(__FILE__) . '/iceri_aktarim.php'); ?>
-                </div>
-            <?php endif; ?>
+            <div class="main-content">
+                <?php include_once(dirname(__FILE__) . '/iceri_aktarim.php'); ?>
+            </div>
         
         <?php elseif ($current_view == 'license-restriction'): ?>
             <?php include_once(dirname(__FILE__) . '/license-restriction.php'); ?>
