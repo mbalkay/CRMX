@@ -97,6 +97,18 @@ if (file_exists($api_file) && file_exists($license_manager_file)) {
         require_once $access_control_file;
     }
 
+    // Enhanced module restrictions dosyasını yükle
+    $module_restrictions_file = plugin_dir_path(__FILE__) . 'includes/license-module-restrictions.php';
+    if (file_exists($module_restrictions_file)) {
+        require_once $module_restrictions_file;
+    }
+
+    // Frontend license control dosyasını yükle
+    $frontend_license_control_file = plugin_dir_path(__FILE__) . 'includes/frontend-license-control.php';
+    if (file_exists($frontend_license_control_file)) {
+        require_once $frontend_license_control_file;
+    }
+
     // Deaktive edildiğinde cron işlerini temizle
     register_deactivation_hook(__FILE__, array('Insurance_CRM_License_Manager', 'deactivation_cleanup'));
 }
