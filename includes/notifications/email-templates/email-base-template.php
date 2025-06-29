@@ -27,7 +27,7 @@ function insurance_crm_get_daily_email_base_template() {
     
     $logo_html = '';
     if (!empty($logo_url)) {
-        $logo_html = '<img src="' . esc_url($logo_url) . '" alt="' . esc_attr($company_name) . '" style="max-height: 30px; max-width: 100px; width: auto; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">';
+        $logo_html = '<img src="' . esc_url($logo_url) . '" alt="' . esc_attr($company_name) . '" style="max-height: 25px; max-width: 60px; width: auto; height: auto; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;">';
     }
     
     return '
@@ -114,9 +114,7 @@ function insurance_crm_get_daily_email_base_template() {
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             }
             .info-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
+                display: table-row;
                 margin-bottom: 12px;
                 padding: 8px 0;
                 border-bottom: 1px solid #f1f3f4;
@@ -126,14 +124,32 @@ function insurance_crm_get_daily_email_base_template() {
                 margin-bottom: 0;
             }
             .info-label {
+                display: table-cell;
                 font-weight: 600;
-                color: #495057;
-                flex: 1;
+                color: #333333 !important;
+                width: 60%;
+                padding: 8px 10px 8px 0;
+                vertical-align: top;
             }
             .info-value {
-                color: #212529;
+                display: table-cell;
+                color: #000000 !important;
                 font-weight: 500;
                 text-align: right;
+                width: 40%;
+                padding: 8px 0 8px 10px;
+                vertical-align: top;
+            }
+            
+            /* Email client specific fixes */
+            table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+            }
+            table td, table th {
+                color: #333333 !important;
+                font-size: 14px !important;
+                line-height: 1.4 !important;
             }
             .email-footer {
                 background-color: #f8f9fa;

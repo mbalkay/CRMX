@@ -95,19 +95,19 @@ if (!empty($variables['yesterday_performance'])) {
 <div class="info-card">
     <h3 style="color: #495057; margin-bottom: 20px;">Dünkü Temsilci Performansları</h3>
     <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; background-color: #ffffff;">
             <thead>
                 <tr style="background-color: #f8f9fa;">
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left; font-weight: 600;">Temsilci</th>
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Yeni Müşteri</th>
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Satılan Poliçe</th>
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Üretim Tutarı</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Temsilci</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Yeni Müşteri</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Satılan Poliçe</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Üretim Tutarı</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($filtered_yesterday as $rep): ?>
                     <tr>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600; color: #333333 !important; background-color: #ffffff !important;">
                             <?php 
                             $name = '';
                             if (!empty($rep->display_name)) {
@@ -121,14 +121,14 @@ if (!empty($variables['yesterday_performance'])) {
                             echo esc_html($name);
                             ?>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <span style="color: #28a745; font-weight: bold; font-size: 16px;"><?php echo isset($rep->new_customers) ? intval($rep->new_customers) : 0; ?></span>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; color: #333333 !important; background-color: #ffffff !important;">
+                            <span style="color: #28a745 !important; font-weight: bold; font-size: 16px;"><?php echo isset($rep->new_customers) ? intval($rep->new_customers) : 0; ?></span>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <span style="color: #17a2b8; font-weight: bold; font-size: 16px;"><?php echo isset($rep->sold_policies) ? intval($rep->sold_policies) : 0; ?></span>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; color: #333333 !important; background-color: #ffffff !important;">
+                            <span style="color: #17a2b8 !important; font-weight: bold; font-size: 16px;"><?php echo isset($rep->sold_policies) ? intval($rep->sold_policies) : 0; ?></span>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <span style="color: #6f42c1; font-weight: bold;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; color: #333333 !important; background-color: #ffffff !important;">
+                            <span style="color: #6f42c1 !important; font-weight: bold;">
                                 <?php echo number_format(isset($rep->premium_total) ? floatval($rep->premium_total) : 0, 0, ',', '.') . ' ₺'; ?>
                             </span>
                         </td>
@@ -244,21 +244,21 @@ if (!empty($variables['representative_performance'])) {
 <div class="info-card">
     <h3 style="color: #6f42c1; margin-bottom: 20px;">Bu Ay Temsilci Performans Özeti</h3>
     <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; background-color: #ffffff;">
             <thead>
                 <tr style="background-color: #f8f9fa;">
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left; font-weight: 600;">Temsilci</th>
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Bu Ay Poliçe</th>
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Bu Ay Prim</th>
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Hedef %</th>
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Bekleyen Görev</th>
-                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">Durum</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Temsilci</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Bu Ay Poliçe</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Bu Ay Prim</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Hedef %</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Bekleyen Görev</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600; color: #333333 !important; background-color: #f8f9fa !important;">Durum</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach (array_slice($filtered_performance, 0, 10) as $rep): ?>
                     <tr>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600; color: #333333 !important; background-color: #ffffff !important;">
                             <?php 
                             $name = '';
                             if (!empty($rep->display_name)) {
@@ -272,18 +272,18 @@ if (!empty($variables['representative_performance'])) {
                             echo esc_html($name);
                             ?>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <span style="color: #28a745; font-weight: bold; font-size: 16px;"><?php echo isset($rep->monthly_policies) ? intval($rep->monthly_policies) : 0; ?></span>
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; color: #333333 !important; background-color: #ffffff !important;">
+                            <span style="color: #28a745 !important; font-weight: bold; font-size: 16px;"><?php echo isset($rep->monthly_policies) ? intval($rep->monthly_policies) : 0; ?></span>
                             <?php if (isset($rep->minimum_policy_count) && $rep->minimum_policy_count > 0): ?>
-                                <div style="font-size: 11px; color: #6c757d;">/ <?php echo intval($rep->minimum_policy_count); ?></div>
+                                <div style="font-size: 11px; color: #6c757d !important;">/ <?php echo intval($rep->minimum_policy_count); ?></div>
                             <?php endif; ?>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
-                            <span style="color: #17a2b8; font-weight: bold;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; color: #333333 !important; background-color: #ffffff !important;">
+                            <span style="color: #17a2b8 !important; font-weight: bold;">
                                 <?php echo number_format(isset($rep->monthly_premium) ? floatval($rep->monthly_premium) : 0, 0, ',', '.') . ' ₺'; ?>
                             </span>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; color: #333333 !important; background-color: #ffffff !important;">
                             <?php 
                             $policy_percentage = 0;
                             $monthly_policies = isset($rep->monthly_policies) ? intval($rep->monthly_policies) : 0;
@@ -294,23 +294,23 @@ if (!empty($variables['representative_performance'])) {
                             }
                             $color = $policy_percentage >= 100 ? '#28a745' : ($policy_percentage >= 70 ? '#ffc107' : '#dc3545');
                             ?>
-                            <span style="color: <?php echo $color; ?>; font-weight: bold;">
+                            <span style="color: <?php echo $color; ?> !important; font-weight: bold;">
                                 %<?php echo number_format($policy_percentage, 0); ?>
                             </span>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; color: #333333 !important; background-color: #ffffff !important;">
                             <?php $pending_tasks = isset($rep->pending_task_count) ? intval($rep->pending_task_count) : 0; ?>
-                            <span style="color: <?php echo $pending_tasks > 10 ? '#dc3545' : ($pending_tasks > 5 ? '#ffc107' : '#28a745'); ?>; font-weight: bold;">
+                            <span style="color: <?php echo $pending_tasks > 10 ? '#dc3545' : ($pending_tasks > 5 ? '#ffc107' : '#28a745'); ?> !important; font-weight: bold;">
                                 <?php echo $pending_tasks; ?>
                             </span>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                        <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; color: #333333 !important; background-color: #ffffff !important;">
                             <?php if ($pending_tasks > 10): ?>
-                                <span style="color: #dc3545; font-weight: 600;">Yoğun</span>
+                                <span style="color: #dc3545 !important; font-weight: 600;">Yoğun</span>
                             <?php elseif ($pending_tasks > 5): ?>
-                                <span style="color: #ffc107; font-weight: 600;">Normal</span>
+                                <span style="color: #ffc107 !important; font-weight: 600;">Normal</span>
                             <?php else: ?>
-                                <span style="color: #28a745; font-weight: 600;">İyi</span>
+                                <span style="color: #28a745 !important; font-weight: 600;">İyi</span>
                             <?php endif; ?>
                         </td>
                     </tr>
