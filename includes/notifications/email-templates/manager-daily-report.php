@@ -79,7 +79,19 @@ if (!defined('ABSPATH')) {
 <?php endif; ?>
 
 <!-- Yesterday's Performance Summary -->
-<?php if (!empty($variables['yesterday_performance']) && count($variables['yesterday_performance']) > 0): ?>
+<?php 
+$filtered_yesterday = array();
+if (!empty($variables['yesterday_performance'])) {
+    foreach ($variables['yesterday_performance'] as $rep) {
+        if ((isset($rep->new_customers) && $rep->new_customers > 0) || 
+            (isset($rep->sold_policies) && $rep->sold_policies > 0) || 
+            (isset($rep->premium_total) && $rep->premium_total > 0)) {
+            $filtered_yesterday[] = $rep;
+        }
+    }
+}
+?>
+<?php if (!empty($filtered_yesterday) && count($filtered_yesterday) > 0): ?>
 <div class="info-card">
     <h3 style="color: #495057; margin-bottom: 20px;">Dünkü Temsilci Performansları</h3>
     <div style="overflow-x: auto;">
@@ -93,16 +105,15 @@ if (!defined('ABSPATH')) {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($variables['yesterday_performance'] as $rep): ?>
+                <?php foreach ($filtered_yesterday as $rep): ?>
                     <tr>
                         <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600;">
                             <?php 
                             $name = '';
-                            if (!empty($rep->first_name) || !empty($rep->last_name)) {
-                                $name = trim($rep->first_name . ' ' . $rep->last_name);
-                            }
-                            if (empty($name) && !empty($rep->display_name)) {
+                            if (!empty($rep->display_name)) {
                                 $name = $rep->display_name;
+                            } elseif (!empty($rep->first_name) || !empty($rep->last_name)) {
+                                $name = trim($rep->first_name . ' ' . $rep->last_name);
                             }
                             if (empty($name)) {
                                 $name = 'İsimsiz Temsilci';
@@ -219,7 +230,17 @@ if (!defined('ABSPATH')) {
 </div>
 
 <!-- Current Month Representative Performance -->
-<?php if (!empty($variables['representative_performance']) && count($variables['representative_performance']) > 0): ?>
+<?php 
+$filtered_performance = array();
+if (!empty($variables['representative_performance'])) {
+    foreach ($variables['representative_performance'] as $rep) {
+        if (isset($rep->monthly_policies) && $rep->monthly_policies > 0) {
+            $filtered_performance[] = $rep;
+        }
+    }
+}
+?>
+<?php if (!empty($filtered_performance) && count($filtered_performance) > 0): ?>
 <div class="info-card">
     <h3 style="color: #6f42c1; margin-bottom: 20px;">Bu Ay Temsilci Performans Özeti</h3>
     <div style="overflow-x: auto;">
@@ -235,16 +256,15 @@ if (!defined('ABSPATH')) {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach (array_slice($variables['representative_performance'], 0, 10) as $rep): ?>
+                <?php foreach (array_slice($filtered_performance, 0, 10) as $rep): ?>
                     <tr>
                         <td style="border: 1px solid #dee2e6; padding: 12px; font-weight: 600;">
                             <?php 
                             $name = '';
-                            if (!empty($rep->first_name) || !empty($rep->last_name)) {
-                                $name = trim($rep->first_name . ' ' . $rep->last_name);
-                            }
-                            if (empty($name) && !empty($rep->display_name)) {
+                            if (!empty($rep->display_name)) {
                                 $name = $rep->display_name;
+                            } elseif (!empty($rep->first_name) || !empty($rep->last_name)) {
+                                $name = trim($rep->first_name . ' ' . $rep->last_name);
                             }
                             if (empty($name)) {
                                 $name = 'İsimsiz Temsilci';
@@ -298,9 +318,9 @@ if (!defined('ABSPATH')) {
             </tbody>
         </table>
         
-        <?php if (count($variables['representative_performance']) > 10): ?>
+        <?php if (count($filtered_performance) > 10): ?>
             <div style="text-align: center; margin-top: 15px; color: #6c757d; font-style: italic;">
-                +<?php echo count($variables['representative_performance']) - 10; ?> temsilci daha
+                +<?php echo count($filtered_performance) - 10; ?> temsilci daha
             </div>
         <?php endif; ?>
     </div>

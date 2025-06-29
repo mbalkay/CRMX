@@ -364,13 +364,14 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         
         // Representative performance summary with financial data
         $data['representative_performance'] = $wpdb->get_results(
-            "SELECT r.first_name, r.last_name, r.monthly_target, r.minimum_policy_count, r.minimum_premium_amount,
+            "SELECT r.first_name, r.last_name, u.display_name, r.monthly_target, r.minimum_policy_count, r.minimum_premium_amount,
                     COUNT(DISTINCT p.id) as policy_count,
                     COUNT(DISTINCT t.id) as pending_task_count,
                     COALESCE(SUM(p.premium_amount), 0) as total_premium,
                     COUNT(DISTINCT pm.id) as monthly_policies,
                     COALESCE(SUM(pm.premium_amount), 0) as monthly_premium
              FROM {$wpdb->prefix}insurance_crm_representatives r
+             JOIN {$wpdb->users} u ON r.user_id = u.ID
              LEFT JOIN {$wpdb->prefix}insurance_crm_policies p ON r.id = p.representative_id AND p.status = 'aktif'
              LEFT JOIN {$wpdb->prefix}insurance_crm_policies pm ON r.id = pm.representative_id 
                  AND pm.status = 'aktif' 
@@ -384,18 +385,19 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         
         // Yesterday's performance by representative
         $data['yesterday_performance'] = $wpdb->get_results(
-            "SELECT r.first_name, r.last_name,
+            "SELECT r.first_name, r.last_name, u.display_name,
                     COUNT(DISTINCT c.id) as new_customers,
                     COUNT(DISTINCT p.id) as sold_policies,
                     COALESCE(SUM(p.premium_amount), 0) as premium_total
              FROM {$wpdb->prefix}insurance_crm_representatives r
+             JOIN {$wpdb->users} u ON r.user_id = u.ID
              LEFT JOIN {$wpdb->prefix}insurance_crm_customers c ON r.id = c.representative_id 
                  AND DATE(c.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
              LEFT JOIN {$wpdb->prefix}insurance_crm_policies p ON r.id = p.representative_id 
                  AND DATE(p.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
              WHERE r.status = 'active'
+               AND (c.id IS NOT NULL OR p.id IS NOT NULL)
              GROUP BY r.id
-             HAVING (new_customers > 0 OR sold_policies > 0)
              ORDER BY premium_total DESC, sold_policies DESC"
         );
         
