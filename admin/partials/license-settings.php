@@ -4,6 +4,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Check if this is a restriction redirect - show custom template
+if (isset($_GET['restriction'])) {
+    $template_path = plugin_dir_path(dirname(dirname(__FILE__))) . 'templates/license-restriction-page.php';
+    if (file_exists($template_path)) {
+        include $template_path;
+        return;
+    }
+}
+
 // License processing logic
 $message = '';
 $message_type = '';
