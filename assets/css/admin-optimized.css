@@ -1,0 +1,477 @@
+/*
+ * Insurance CRM - Optimized Admin Styles
+ * Version: 2.0.0
+ * Modern, performance-optimized CSS with critical path optimization
+ */
+
+/* Critical CSS - Above the fold content */
+.insurance-crm-wrap {
+    margin: 20px 20px 0 0;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.insurance-crm-header {
+    background: linear-gradient(135deg, #2271b1 0%, #1e5a8a 100%);
+    color: #fff;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.insurance-crm-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.insurance-crm-header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.insurance-crm-loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2271b1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Stats Grid - Critical for dashboard */
+.insurance-crm-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+.insurance-crm-stat-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-left: 4px solid #2271b1;
+}
+
+.insurance-crm-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.insurance-crm-stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 10px 0;
+    color: #2271b1;
+    line-height: 1;
+}
+
+.insurance-crm-stat-label {
+    color: #666;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Non-critical CSS loaded after */
+.insurance-crm-content {
+    padding: 20px;
+}
+
+.insurance-crm-table-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.insurance-crm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.insurance-crm-table th,
+.insurance-crm-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.insurance-crm-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.insurance-crm-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.insurance-crm-table .actions {
+    white-space: nowrap;
+}
+
+.insurance-crm-table .actions a {
+    margin-right: 8px;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.insurance-crm-table .actions .edit {
+    background: #0073aa;
+    color: #fff;
+}
+
+.insurance-crm-table .actions .delete {
+    background: #dc3232;
+    color: #fff;
+}
+
+.insurance-crm-table .actions .view {
+    background: #00a32a;
+    color: #fff;
+}
+
+.insurance-crm-table .actions a:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Status badges */
+.insurance-crm-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.insurance-crm-badge-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.insurance-crm-badge-inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.insurance-crm-badge-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.insurance-crm-badge-high {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.insurance-crm-badge-medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.insurance-crm-badge-low {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Dashboard widgets */
+.insurance-crm-dashboard-widgets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.insurance-crm-widget {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.insurance-crm-widget-header {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.insurance-crm-widget h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.insurance-crm-widget-content {
+    padding: 20px;
+}
+
+/* Form elements */
+.insurance-crm-form {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.insurance-crm-form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.insurance-crm-form-group {
+    flex: 1;
+}
+
+.insurance-crm-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.insurance-crm-form-group input,
+.insurance-crm-form-group select,
+.insurance-crm-form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.insurance-crm-form-group input:focus,
+.insurance-crm-form-group select:focus,
+.insurance-crm-form-group textarea:focus {
+    outline: none;
+    border-color: #2271b1;
+    box-shadow: 0 0 0 3px rgba(34, 113, 177, 0.1);
+}
+
+/* Buttons */
+.insurance-crm-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #2271b1;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.insurance-crm-button:hover {
+    background: #1e5a8a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(34, 113, 177, 0.3);
+}
+
+.insurance-crm-button.secondary {
+    background: #6c757d;
+}
+
+.insurance-crm-button.secondary:hover {
+    background: #5a6268;
+}
+
+.insurance-crm-button.success {
+    background: #00a32a;
+}
+
+.insurance-crm-button.success:hover {
+    background: #008a20;
+}
+
+.insurance-crm-button.danger {
+    background: #dc3232;
+}
+
+.insurance-crm-button.danger:hover {
+    background: #c62d2d;
+}
+
+/* Performance optimizations */
+.insurance-crm-table tbody tr {
+    contain: layout;
+}
+
+.insurance-crm-widget {
+    contain: content;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .insurance-crm-wrap {
+        margin: 10px;
+    }
+    
+    .insurance-crm-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .insurance-crm-header-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .insurance-crm-header-actions .button {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+    
+    .insurance-crm-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        padding: 15px;
+    }
+    
+    .insurance-crm-stat-card {
+        padding: 15px;
+    }
+    
+    .insurance-crm-stat-number {
+        font-size: 24px;
+        margin: 8px 0;
+    }
+    
+    .insurance-crm-dashboard-widgets {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .insurance-crm-widget {
+        padding: 12px;
+    }
+    
+    .insurance-crm-widget h3 {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    
+    .insurance-crm-table th,
+    .insurance-crm-table td {
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+    
+    .insurance-crm-table-container {
+        padding: 12px;
+    }
+    
+    .insurance-crm-header h1 {
+        font-size: 20px;
+    }
+    
+    .insurance-crm-form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .insurance-crm-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .insurance-crm-stat-number {
+        font-size: 20px;
+    }
+    
+    .insurance-crm-table {
+        font-size: 11px;
+    }
+    
+    .insurance-crm-table th,
+    .insurance-crm-table td {
+        padding: 6px 4px;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .insurance-crm-wrap {
+        background: #1e1e1e;
+        color: #fff;
+    }
+    
+    .insurance-crm-stat-card {
+        background: #2d2d2d;
+        color: #fff;
+    }
+    
+    .insurance-crm-table th {
+        background: #2d2d2d;
+        color: #fff;
+    }
+    
+    .insurance-crm-table tr:hover {
+        background-color: #333;
+    }
+}
+
+/* Print styles */
+@media print {
+    .insurance-crm-header-actions,
+    .insurance-crm-table .actions {
+        display: none;
+    }
+    
+    .insurance-crm-wrap {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}

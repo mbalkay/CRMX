@@ -1,0 +1,36 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "indentation": 4,
+    "string-quotes": "single",
+    "no-duplicate-selectors": true,
+    "color-hex-case": "lower",
+    "color-hex-length": "short",
+    "color-named": "never",
+    "selector-combinator-space-after": "always",
+    "selector-attribute-quotes": "always",
+    "selector-attribute-operator-space-before": "never",
+    "selector-attribute-operator-space-after": "never",
+    "selector-attribute-brackets-space-inside": "never",
+    "declaration-block-trailing-semicolon": "always",
+    "declaration-colon-space-before": "never",
+    "declaration-colon-space-after": "always",
+    "property-no-vendor-prefix": null,
+    "value-no-vendor-prefix": null,
+    "number-leading-zero": "always",
+    "function-url-quotes": "always",
+    "comment-whitespace-inside": "always",
+    "rule-empty-line-before": ["always", {
+      "except": ["first-nested"],
+      "ignore": ["after-comment"]
+    }],
+    "selector-pseudo-element-colon-notation": "double",
+    "media-feature-range-operator-space-before": "always",
+    "media-feature-range-operator-space-after": "always"
+  },
+  "ignoreFiles": [
+    "**/*.min.css",
+    "**/vendor/**/*",
+    "**/node_modules/**/*"
+  ]
+}

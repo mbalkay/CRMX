@@ -118,124 +118,26 @@ if (file_exists($api_file) && file_exists($license_manager_file)) {
  * Teklif bilgileri için sütunların doğrudan eklenmesini sağla
  * Bu fonksiyon her sayfa yüklenişinde çalışır ve sütunların var olup olmadığını kontrol eder
  */
+/**
+ * Enhanced database update with modular approach
+ * Moved to class-database-manager.php for better organization
+ */
 function force_update_crm_db() {
-    global $wpdb;
-    
-    // Check if this function has already run in this session to avoid excessive checking
-    static $db_check_done = false;
-    if ($db_check_done) {
-        return;
+    // Load database manager if not already loaded
+    if (!class_exists('Insurance_CRM_Database_Manager')) {
+        require_once plugin_dir_path(__FILE__) . 'includes/core/class-database-manager.php';
     }
     
-    $table_name = $wpdb->prefix . 'insurance_crm_customers';
-    
-    // Tablonun var olduğundan emin olalım
-    if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
-        return; // Tablo yoksa bir şey yapma
+    // Let the database manager handle this
+    global $insurance_crm_db_manager;
+    if (!$insurance_crm_db_manager) {
+        $insurance_crm_db_manager = new Insurance_CRM_Database_Manager();
     }
     
-    // has_offer sütununu doğrudan kontrol et
-    $column_exists = $wpdb->get_results("SHOW COLUMNS FROM `{$table_name}` LIKE 'has_offer'");
-    
-    // Sütun yoksa ekle
-    if (empty($column_exists)) {
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `has_offer` TINYINT(1) DEFAULT 0");
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `offer_insurance_type` VARCHAR(100) DEFAULT NULL");
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `offer_amount` DECIMAL(10,2) DEFAULT NULL");
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `offer_expiry_date` DATE DEFAULT NULL");
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `offer_notes` TEXT DEFAULT NULL");
-    }
-    
-    // **FIX**: Add phone2 column for second phone number
-    $phone2_exists = $wpdb->get_results("SHOW COLUMNS FROM `{$table_name}` LIKE 'phone2'");
-    if (empty($phone2_exists)) {
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `phone2` VARCHAR(20) DEFAULT NULL");
-    }
-    
-    // **FIX**: Add ilk_kayit_eden column for İlk Kayıt Eden information
-    $ilk_kayit_eden_exists = $wpdb->get_results("SHOW COLUMNS FROM `{$table_name}` LIKE 'ilk_kayit_eden'");
-    if (empty($ilk_kayit_eden_exists)) {
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `ilk_kayit_eden` BIGINT(20) DEFAULT NULL");
-    }
-    
-    // **NEW**: Add offer_reminder column for quote reminder functionality
-    $offer_reminder_exists = $wpdb->get_results("SHOW COLUMNS FROM `{$table_name}` LIKE 'offer_reminder'");
-    if (empty($offer_reminder_exists)) {
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `offer_reminder` TINYINT(1) DEFAULT 0");
-    }
-    
-    // **NEW**: Add gross_premium column for Kasko/Trafik policies
-    $policies_table = $wpdb->prefix . 'insurance_crm_policies';
-    if ($wpdb->get_var("SHOW TABLES LIKE '$policies_table'") == $policies_table) {
-        $gross_premium_exists = $wpdb->get_results("SHOW COLUMNS FROM `{$policies_table}` LIKE 'gross_premium'");
-        if (empty($gross_premium_exists)) {
-            $wpdb->query("ALTER TABLE `{$policies_table}` ADD COLUMN `gross_premium` DECIMAL(10,2) DEFAULT NULL AFTER `premium_amount`");
-        }
-    }
-    
-    // **NEW**: Add personal information fields to representatives table
-    $representatives_table = $wpdb->prefix . 'insurance_crm_representatives';
-    if ($wpdb->get_var("SHOW TABLES LIKE '$representatives_table'") == $representatives_table) {
-        // Add birth_date column
-        $birth_date_exists = $wpdb->get_results("SHOW COLUMNS FROM `{$representatives_table}` LIKE 'birth_date'");
-        if (empty($birth_date_exists)) {
-            $wpdb->query("ALTER TABLE `{$representatives_table}` ADD COLUMN `birth_date` DATE DEFAULT NULL");
-        }
-        
-        // Add wedding_anniversary column
-        $wedding_anniversary_exists = $wpdb->get_results("SHOW COLUMNS FROM `{$representatives_table}` LIKE 'wedding_anniversary'");
-        if (empty($wedding_anniversary_exists)) {
-            $wpdb->query("ALTER TABLE `{$representatives_table}` ADD COLUMN `wedding_anniversary` DATE DEFAULT NULL");
-        }
-        
-        // Add children_birthdays column (JSON format to store multiple dates)
-        $children_birthdays_exists = $wpdb->get_results("SHOW COLUMNS FROM `{$representatives_table}` LIKE 'children_birthdays'");
-        if (empty($children_birthdays_exists)) {
-            $wpdb->query("ALTER TABLE `{$representatives_table}` ADD COLUMN `children_birthdays` TEXT DEFAULT NULL");
-        }
-    }
-    
-    // Add customer_notes_updated_at column to customers table
-    $customer_notes_updated_at_exists = $wpdb->get_results("SHOW COLUMNS FROM `{$table_name}` LIKE 'customer_notes_updated_at'");
-    if (empty($customer_notes_updated_at_exists)) {
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `customer_notes_updated_at` DATETIME DEFAULT NULL");
-    }
-    
-    // **NEW**: Ensure task notes table exists
-    $task_notes_table = $wpdb->prefix . 'insurance_crm_task_notes';
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$task_notes_table'");
-    
-    if ($table_exists != $task_notes_table) {
-        $charset_collate = $wpdb->get_charset_collate();
-        $sql_task_notes = "CREATE TABLE $task_notes_table (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            task_id bigint(20) NOT NULL,
-            note_content text NOT NULL,
-            created_by bigint(20) NOT NULL,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY task_id (task_id),
-            KEY created_by (created_by)
-        ) $charset_collate;";
-        
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        $result = dbDelta($sql_task_notes);
-        
-        // If dbDelta failed, try direct creation
-        $table_exists_after = $wpdb->get_var("SHOW TABLES LIKE '$task_notes_table'");
-        if (!$table_exists_after) {
-            $direct_result = $wpdb->query($sql_task_notes);
-            if ($direct_result === false) {
-                error_log('Task notes table creation failed completely: ' . $wpdb->last_error);
-            }
-        }
-    }
-    
-    // Mark that the database check has been completed for this request
-    $db_check_done = true;
+    $insurance_crm_db_manager->force_update_crm_db();
 }
-// Her sayfa yüklendiğinde bu fonksiyonu çalıştır - böylece sütunların varlığından emin oluruz
+
+// Keep the hook for backward compatibility  
 add_action('init', 'force_update_crm_db', 5);
 
 /**
@@ -291,6 +193,23 @@ require plugin_dir_path(__FILE__) . 'includes/class-insurance-crm.php';
 require plugin_dir_path(__FILE__) . 'includes/functions.php';
 require plugin_dir_path(__FILE__) . 'includes/email-templates.php';
 require plugin_dir_path(__FILE__) . 'includes/helpdesk-functions.php';
+
+/**
+ * Load Enhanced Modular Components (Version 2.0)
+ */
+// Core modules
+require_once plugin_dir_path(__FILE__) . 'includes/core/class-database-manager.php';
+require_once plugin_dir_path(__FILE__) . 'includes/core/class-ajax-handler.php';
+
+// Real-time features
+if (file_exists(plugin_dir_path(__FILE__) . 'includes/class-realtime-announcements.php')) {
+    require_once plugin_dir_path(__FILE__) . 'includes/class-realtime-announcements.php';
+}
+
+// Performance monitoring
+if (file_exists(plugin_dir_path(__FILE__) . 'includes/performance-monitor.php')) {
+    require_once plugin_dir_path(__FILE__) . 'includes/performance-monitor.php';
+}
 
 /**
  * Begins execution of the plugin.

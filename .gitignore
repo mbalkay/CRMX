@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+*.min.js
+*.min.css
+*.critical.css
+*.bundle.js
+
+# Logs
+*.log
+logs/
+/tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# WordPress
+wp-config.php
+wp-content/uploads/
+.htaccess
+
+# Performance monitoring logs
+/wp-content/uploads/insurance-crm-logs/
+
+# Cache files
+*.cache
+.eslintcache
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Package files
+*.tar.gz
+*.zip
+
+# Environment files
+.env
+.env.local
+.env.production
