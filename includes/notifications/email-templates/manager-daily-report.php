@@ -18,6 +18,23 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+
+// Helper function to get representative name
+function get_rep_name($rep) {
+    $name = '';
+    if (!empty($rep->display_name)) {
+        $name = $rep->display_name;
+    } elseif (!empty($rep->first_name) && !empty($rep->last_name)) {
+        $name = trim($rep->first_name . ' ' . $rep->last_name);
+    } elseif (!empty($rep->first_name)) {
+        $name = $rep->first_name;
+    } elseif (!empty($rep->last_name)) {
+        $name = $rep->last_name;
+    } else {
+        $name = 'İsimsiz Temsilci';
+    }
+    return $name;
+}
 ?>
 
 <h2 class="section-title">Yönetici Günlük Raporu</h2>
@@ -92,20 +109,7 @@ if (!empty($variables['yesterday_performance'])) {
     <tbody>
         <?php foreach ($filtered_yesterday as $rep): ?>
             <tr>
-                <td>
-                    <?php 
-                    $name = '';
-                    if (!empty($rep->display_name)) {
-                        $name = $rep->display_name;
-                    } elseif (!empty($rep->first_name) || !empty($rep->last_name)) {
-                        $name = trim($rep->first_name . ' ' . $rep->last_name);
-                    }
-                    if (empty($name)) {
-                        $name = 'İsimsiz Temsilci';
-                    }
-                    echo esc_html($name);
-                    ?>
-                </td>
+                <td><?php echo esc_html(get_rep_name($rep)); ?></td>
                 <td style="text-align: center; color: #28a745; font-weight: bold;">
                     <?php echo isset($rep->new_customers) ? intval($rep->new_customers) : 0; ?>
                 </td>
@@ -248,20 +252,7 @@ if (!empty($variables['representative_performance'])) {
     <tbody>
         <?php foreach (array_slice($filtered_performance, 0, 10) as $rep): ?>
             <tr>
-                <td>
-                    <?php 
-                    $name = '';
-                    if (!empty($rep->display_name)) {
-                        $name = $rep->display_name;
-                    } elseif (!empty($rep->first_name) || !empty($rep->last_name)) {
-                        $name = trim($rep->first_name . ' ' . $rep->last_name);
-                    }
-                    if (empty($name)) {
-                        $name = 'İsimsiz Temsilci';
-                    }
-                    echo esc_html($name);
-                    ?>
-                </td>
+                <td><?php echo esc_html(get_rep_name($rep)); ?></td>
                 <td style="text-align: center; color: #28a745; font-weight: bold;">
                     <?php echo isset($rep->monthly_policies) ? intval($rep->monthly_policies) : 0; ?>
                     <?php if (isset($rep->minimum_policy_count) && $rep->minimum_policy_count > 0): ?>

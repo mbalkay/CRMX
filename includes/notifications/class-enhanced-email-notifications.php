@@ -365,19 +365,47 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         // Representative performance summary with financial data
         $data['representative_performance'] = $wpdb->get_results(
             "SELECT r.first_name, r.last_name, u.display_name, r.monthly_target, r.minimum_policy_count, r.minimum_premium_amount,
-                    (SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_policies p WHERE p.representative_id = r.id AND p.status = 'aktif') as policy_count,
-                    (SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_tasks t WHERE t.representative_id = r.id AND t.status = 'pending') as pending_task_count,
-                    (SELECT COALESCE(SUM(p.premium_amount), 0) FROM {$wpdb->prefix}insurance_crm_policies p WHERE p.representative_id = r.id AND p.status = 'aktif') as total_premium,
-                    (SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_policies pm WHERE pm.representative_id = r.id 
-                        AND pm.status = 'aktif' 
-                        AND MONTH(pm.created_at) = MONTH(CURDATE()) 
-                        AND YEAR(pm.created_at) = YEAR(CURDATE())) as monthly_policies,
-                    (SELECT COALESCE(SUM(pm.premium_amount), 0) FROM {$wpdb->prefix}insurance_crm_policies pm WHERE pm.representative_id = r.id 
-                        AND pm.status = 'aktif' 
-                        AND MONTH(pm.created_at) = MONTH(CURDATE()) 
-                        AND YEAR(pm.created_at) = YEAR(CURDATE())) as monthly_premium
+                    COALESCE(policy_counts.policy_count, 0) as policy_count,
+                    COALESCE(task_counts.pending_task_count, 0) as pending_task_count,
+                    COALESCE(policy_sums.total_premium, 0) as total_premium,
+                    COALESCE(monthly_counts.monthly_policies, 0) as monthly_policies,
+                    COALESCE(monthly_sums.monthly_premium, 0) as monthly_premium
              FROM {$wpdb->prefix}insurance_crm_representatives r
              JOIN {$wpdb->users} u ON r.user_id = u.ID
+             LEFT JOIN (
+                 SELECT representative_id, COUNT(*) as policy_count 
+                 FROM {$wpdb->prefix}insurance_crm_policies 
+                 WHERE status = 'aktif' 
+                 GROUP BY representative_id
+             ) policy_counts ON r.id = policy_counts.representative_id
+             LEFT JOIN (
+                 SELECT representative_id, COUNT(*) as pending_task_count 
+                 FROM {$wpdb->prefix}insurance_crm_tasks 
+                 WHERE status = 'pending' 
+                 GROUP BY representative_id
+             ) task_counts ON r.id = task_counts.representative_id
+             LEFT JOIN (
+                 SELECT representative_id, SUM(premium_amount) as total_premium 
+                 FROM {$wpdb->prefix}insurance_crm_policies 
+                 WHERE status = 'aktif' 
+                 GROUP BY representative_id
+             ) policy_sums ON r.id = policy_sums.representative_id
+             LEFT JOIN (
+                 SELECT representative_id, COUNT(*) as monthly_policies 
+                 FROM {$wpdb->prefix}insurance_crm_policies 
+                 WHERE status = 'aktif' 
+                 AND MONTH(created_at) = MONTH(CURDATE()) 
+                 AND YEAR(created_at) = YEAR(CURDATE())
+                 GROUP BY representative_id
+             ) monthly_counts ON r.id = monthly_counts.representative_id
+             LEFT JOIN (
+                 SELECT representative_id, SUM(premium_amount) as monthly_premium 
+                 FROM {$wpdb->prefix}insurance_crm_policies 
+                 WHERE status = 'aktif' 
+                 AND MONTH(created_at) = MONTH(CURDATE()) 
+                 AND YEAR(created_at) = YEAR(CURDATE())
+                 GROUP BY representative_id
+             ) monthly_sums ON r.id = monthly_sums.representative_id
              WHERE r.status = 'active'
              ORDER BY monthly_policies DESC, monthly_premium DESC"
         );
@@ -385,17 +413,29 @@ class Insurance_CRM_Enhanced_Email_Notifications {
         // Yesterday's performance by representative
         $data['yesterday_performance'] = $wpdb->get_results(
             "SELECT r.first_name, r.last_name, u.display_name,
-                    (SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_customers c 
-                     WHERE c.representative_id = r.id 
-                     AND DATE(c.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)) as new_customers,
-                    (SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_policies p 
-                     WHERE p.representative_id = r.id 
-                     AND DATE(p.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)) as sold_policies,
-                    (SELECT COALESCE(SUM(p.premium_amount), 0) FROM {$wpdb->prefix}insurance_crm_policies p 
-                     WHERE p.representative_id = r.id 
-                     AND DATE(p.created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)) as premium_total
+                    COALESCE(customer_counts.new_customers, 0) as new_customers,
+                    COALESCE(policy_counts.sold_policies, 0) as sold_policies,
+                    COALESCE(policy_sums.premium_total, 0) as premium_total
              FROM {$wpdb->prefix}insurance_crm_representatives r
              JOIN {$wpdb->users} u ON r.user_id = u.ID
+             LEFT JOIN (
+                 SELECT representative_id, COUNT(*) as new_customers 
+                 FROM {$wpdb->prefix}insurance_crm_customers 
+                 WHERE DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+                 GROUP BY representative_id
+             ) customer_counts ON r.id = customer_counts.representative_id
+             LEFT JOIN (
+                 SELECT representative_id, COUNT(*) as sold_policies 
+                 FROM {$wpdb->prefix}insurance_crm_policies 
+                 WHERE DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+                 GROUP BY representative_id
+             ) policy_counts ON r.id = policy_counts.representative_id
+             LEFT JOIN (
+                 SELECT representative_id, SUM(premium_amount) as premium_total 
+                 FROM {$wpdb->prefix}insurance_crm_policies 
+                 WHERE DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+                 GROUP BY representative_id
+             ) policy_sums ON r.id = policy_sums.representative_id
              WHERE r.status = 'active'
              ORDER BY r.first_name, r.last_name"
         );

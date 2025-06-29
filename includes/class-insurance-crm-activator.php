@@ -94,6 +94,11 @@ class Insurance_CRM_Activator {
             phone varchar(20) NOT NULL,
             department varchar(100) NOT NULL,
             monthly_target decimal(10,2) DEFAULT 0.00,
+            minimum_policy_count int(11) DEFAULT 10,
+            minimum_premium_amount decimal(10,2) DEFAULT 300000.00,
+            role int(1) DEFAULT 4,
+            first_name varchar(100) DEFAULT NULL,
+            last_name varchar(100) DEFAULT NULL,
             status varchar(20) DEFAULT 'active',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -287,6 +292,9 @@ class Insurance_CRM_Activator {
 
         // Update policy table columns for proper field storage
         self::update_policies_table_columns();
+        
+        // Update representatives table with missing columns
+        self::update_representatives_table_columns();
         
         // Aktivasyon zamanını kaydet
         add_option('insurance_crm_activation_time', time());
@@ -656,5 +664,52 @@ class Insurance_CRM_Activator {
         
         // Uninstall işlemlerini yap
         do_action('insurance_crm_uninstalled');
+    }
+    
+    /**
+     * Update representatives table with missing columns
+     */
+    public static function update_representatives_table_columns() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'insurance_crm_representatives';
+        
+        // Get existing columns
+        $existing_columns = $wpdb->get_col("SHOW COLUMNS FROM $table_name");
+        
+        // Define columns to add
+        $columns_to_add = array(
+            'minimum_policy_count' => "ADD COLUMN minimum_policy_count int(11) DEFAULT 10 COMMENT 'Minimum monthly policy count target'",
+            'minimum_premium_amount' => "ADD COLUMN minimum_premium_amount decimal(10,2) DEFAULT 300000.00 COMMENT 'Minimum monthly premium amount target'",
+            'role' => "ADD COLUMN role int(1) DEFAULT 4 COMMENT 'User role: 1=Patron, 2=Müdür, 3=Team Leader, 4=Representative'",
+            'first_name' => "ADD COLUMN first_name varchar(100) DEFAULT NULL COMMENT 'Representative first name'",
+            'last_name' => "ADD COLUMN last_name varchar(100) DEFAULT NULL COMMENT 'Representative last name'"
+        );
+        
+        // Add missing columns
+        $altered = false;
+        foreach ($columns_to_add as $column => $sql) {
+            if (!in_array($column, $existing_columns)) {
+                $result = $wpdb->query("ALTER TABLE $table_name $sql");
+                if ($result !== false) {
+                    error_log("Insurance CRM: Added representatives column: $column");
+                    $altered = true;
+                } else {
+                    error_log("Insurance CRM: Failed to add representatives column: $column - " . $wpdb->last_error);
+                }
+            }
+        }
+        
+        // Update existing representatives with names from WordPress users table
+        if ($altered) {
+            $wpdb->query("
+                UPDATE {$table_name} r 
+                JOIN {$wpdb->users} u ON r.user_id = u.ID 
+                SET r.first_name = COALESCE(r.first_name, u.display_name),
+                    r.last_name = COALESCE(r.last_name, '')
+                WHERE r.first_name IS NULL OR r.first_name = ''
+            ");
+            
+            error_log('Insurance CRM: Representatives table columns updated. Date: ' . current_time('mysql'));
+        }
     }
 }
