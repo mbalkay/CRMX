@@ -216,6 +216,9 @@ if (isset($_POST['submit_settings']) && isset($_POST['settings_nonce']) &&
         $settings['notification_settings']['email_notifications'] = isset($_POST['email_notifications']);
         $settings['notification_settings']['renewal_notifications'] = isset($_POST['renewal_notifications']);
         $settings['notification_settings']['task_notifications'] = isset($_POST['task_notifications']);
+        $settings['notification_settings']['new_policy_notifications'] = isset($_POST['new_policy_notifications']);
+        $settings['notification_settings']['new_customer_notifications'] = isset($_POST['new_customer_notifications']);
+        $settings['notification_settings']['new_task_notifications'] = isset($_POST['new_task_notifications']);
     }
     // E-posta şablonları
     elseif ($tab === 'email_templates') {
@@ -544,33 +547,112 @@ $total_task_types = count($settings['default_task_types']);
                 <div class="settings-tab <?php echo $active_tab === 'notifications' ? 'active' : ''; ?>" id="notifications-tab">
                     <div class="tab-header">
                         <h2><i class="fas fa-bell"></i> Bildirim Ayarları</h2>
+                        <p>Sistem bildirimleri ve otomatik e-posta gönderimlerini yapılandırın</p>
                     </div>
                     <div class="tab-content">
-                        <div class="form-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="email_notifications" id="email_notifications" 
-                                       <?php checked(isset($settings['notification_settings']['email_notifications']) ? $settings['notification_settings']['email_notifications'] : false); ?>>
-                                <span class="checkbox-text">E-posta bildirimlerini etkinleştir</span>
-                            </label>
-                            <div class="form-hint">Sistem bildirimleri e-posta yoluyla da gönderilir.</div>
+                        <div class="permission-section">
+                            <h3><i class="fas fa-envelope"></i> Genel E-posta Bildirimleri</h3>
+                            
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="email_notifications" id="email_notifications" 
+                                           <?php checked(isset($settings['notification_settings']['email_notifications']) ? $settings['notification_settings']['email_notifications'] : false); ?>>
+                                    <span class="checkmark"></span>
+                                    <div class="checkbox-content">
+                                        <strong>E-posta bildirimlerini etkinleştir</strong>
+                                        <p>Sistem bildirimleri e-posta yoluyla da gönderilir.</p>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="renewal_notifications" id="renewal_notifications"
+                                           <?php checked(isset($settings['notification_settings']['renewal_notifications']) ? $settings['notification_settings']['renewal_notifications'] : false); ?>>
+                                    <span class="checkmark"></span>
+                                    <div class="checkbox-content">
+                                        <strong>Poliçe yenileme bildirimlerini etkinleştir</strong>
+                                        <p>Poliçe yenilemeleri için bildirim gönderilir.</p>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="task_notifications" id="task_notifications"
+                                           <?php checked(isset($settings['notification_settings']['task_notifications']) ? $settings['notification_settings']['task_notifications'] : false); ?>>
+                                    <span class="checkmark"></span>
+                                    <div class="checkbox-content">
+                                        <strong>Görev bildirimlerini etkinleştir</strong>
+                                        <p>Görevler için bildirim gönderilir.</p>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="renewal_notifications" id="renewal_notifications"
-                                       <?php checked(isset($settings['notification_settings']['renewal_notifications']) ? $settings['notification_settings']['renewal_notifications'] : false); ?>>
-                                <span class="checkbox-text">Poliçe yenileme bildirimlerini etkinleştir</span>
-                            </label>
-                            <div class="form-hint">Poliçe yenilemeleri için bildirim gönderilir.</div>
+                        <div class="permission-section">
+                            <h3><i class="fas fa-plus-circle"></i> Yeni Kayıt Bildirimleri</h3>
+                            
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="new_policy_notifications" id="new_policy_notifications"
+                                           <?php checked(isset($settings['notification_settings']['new_policy_notifications']) ? $settings['notification_settings']['new_policy_notifications'] : false); ?>>
+                                    <span class="checkmark"></span>
+                                    <div class="checkbox-content">
+                                        <strong>Yeni poliçe eklendiğinde e-posta gönder</strong>
+                                        <p>Yeni poliçe oluşturulduğunda yöneticilere bildirim e-postası gönderilir.</p>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="new_customer_notifications" id="new_customer_notifications"
+                                           <?php checked(isset($settings['notification_settings']['new_customer_notifications']) ? $settings['notification_settings']['new_customer_notifications'] : false); ?>>
+                                    <span class="checkmark"></span>
+                                    <div class="checkbox-content">
+                                        <strong>Yeni müşteri eklendiğinde e-posta gönder</strong>
+                                        <p>Yeni müşteri kaydedildiğinde yöneticilere bildirim e-postası gönderilir.</p>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="new_task_notifications" id="new_task_notifications"
+                                           <?php checked(isset($settings['notification_settings']['new_task_notifications']) ? $settings['notification_settings']['new_task_notifications'] : true); ?>>
+                                    <span class="checkmark"></span>
+                                    <div class="checkbox-content">
+                                        <strong>Yeni görev eklendiğinde e-posta gönder</strong>
+                                        <p>Yeni görev oluşturulduğunda yöneticilere bildirim e-postası gönderilir.</p>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="task_notifications" id="task_notifications"
-                                       <?php checked(isset($settings['notification_settings']['task_notifications']) ? $settings['notification_settings']['task_notifications'] : false); ?>>
-                                <span class="checkbox-text">Görev bildirimlerini etkinleştir</span>
-                            </label>
-                            <div class="form-hint">Görevler için bildirim gönderilir.</div>
+                        <div class="permission-section">
+                            <h3><i class="fas fa-paper-plane"></i> Manuel Günlük E-posta Gönderimi</h3>
+                            <p class="section-description">
+                                Günlük hatırlatma e-postalarını manuel olarak göndermek için bu butonları kullanın.
+                            </p>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <button type="button" id="send-manager-emails" class="btn-modern btn-save" style="width: 100%;">
+                                        <i class="fas fa-user-tie"></i> Yöneticilere Gönder
+                                    </button>
+                                    <div class="form-hint">Patron ve Müdürlere günlük özet e-postası gönderir</div>
+                                    <div id="manager-email-result" class="email-result"></div>
+                                </div>
+                                
+                                <div class="form-group col-md-6">
+                                    <button type="button" id="send-representative-emails" class="btn-modern btn-secondary" style="width: 100%;">
+                                        <i class="fas fa-users"></i> Temsilcilere Gönder
+                                    </button>
+                                    <div class="form-hint">Tüm temsilcilere günlük özet e-postası gönderir</div>
+                                    <div id="representative-email-result" class="email-result"></div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-actions">
@@ -1690,6 +1772,51 @@ textarea.form-control {
     50% { opacity: 0.7; }
     100% { opacity: 1; }
 }
+
+/* Email Result Styling */
+.email-result {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+}
+
+.email-result.success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+}
+
+.email-result.error {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+}
+
+.email-result.loading {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+    display: block;
+}
+
+.email-result i {
+    margin-right: 8px;
+}
+
+/* Loading spinner for email buttons */
+.btn-loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.btn-loading i {
+    animation: fa-spin 1s infinite linear;
+}
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1779,6 +1906,79 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+    
+    // Manual email send functionality
+    const managerEmailBtn = document.getElementById('send-manager-emails');
+    const representativeEmailBtn = document.getElementById('send-representative-emails');
+    const managerResult = document.getElementById('manager-email-result');
+    const representativeResult = document.getElementById('representative-email-result');
+    
+    if (managerEmailBtn) {
+        managerEmailBtn.addEventListener('click', function() {
+            sendManualEmails('managers', this, managerResult);
+        });
+    }
+    
+    if (representativeEmailBtn) {
+        representativeEmailBtn.addEventListener('click', function() {
+            sendManualEmails('representatives', this, representativeResult);
+        });
+    }
+    
+    function sendManualEmails(type, button, resultDiv) {
+        // Disable button and show loading
+        button.classList.add('btn-loading');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
+        
+        // Show loading result
+        resultDiv.className = 'email-result loading';
+        resultDiv.innerHTML = '<i class="fas fa-clock"></i> E-postalar gönderiliyor...';
+        
+        // Prepare AJAX data
+        const formData = new FormData();
+        formData.append('action', 'insurance_crm_send_manual_daily_emails');
+        formData.append('nonce', '<?php echo wp_create_nonce('insurance_crm_manual_daily_emails'); ?>');
+        formData.append('email_type', type);
+        
+        // Send AJAX request
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Reset button
+            button.classList.remove('btn-loading');
+            button.innerHTML = originalText;
+            
+            // Show result
+            if (data.success) {
+                resultDiv.className = 'email-result success';
+                resultDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.data;
+            } else {
+                resultDiv.className = 'email-result error';
+                resultDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.data;
+            }
+            
+            // Hide result after 5 seconds
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 8000);
+        })
+        .catch(error => {
+            // Reset button on error
+            button.classList.remove('btn-loading');
+            button.innerHTML = originalText;
+            
+            resultDiv.className = 'email-result error';
+            resultDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Bir hata oluştu: ' + error.message;
+            
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 8000);
+        });
+    }
 });
 
 // Announcement preview function
