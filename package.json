@@ -1,0 +1,54 @@
+{
+  "name": "insurance-crm",
+  "version": "1.9.7",
+  "description": "Insurance CRM - Modern WordPress plugin for insurance agencies",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "npm run minify:css && npm run build:css-critical",
+    "build:js": "npm run minify:js && npm run build:js-modules", 
+    "minify:css": "cleancss -o assets/css/admin.min.css assets/css/admin.css && cleancss -o assets/css/representative-panel-global.min.css assets/css/representative-panel-global.css && cleancss -o public/css/representative-panel.min.css public/css/representative-panel.css",
+    "minify:js": "terser assets/js/representative-panel.js -o assets/js/representative-panel.min.js -c -m && terser assets/js/dashboard-widgets.js -o assets/js/dashboard-widgets.min.js -c -m && terser public/js/representative-panel.js -o public/js/representative-panel.min.js -c -m",
+    "build:css-critical": "node build/extract-critical-css.js",
+    "build:js-modules": "node build/bundle-modules.js",
+    "watch": "npm run watch:css & npm run watch:js",
+    "watch:css": "chokidar \"assets/css/**/*.css\" \"public/css/**/*.css\" -c \"npm run minify:css\"",
+    "watch:js": "chokidar \"assets/js/**/*.js\" \"public/js/**/*.js\" -c \"npm run minify:js\"",
+    "lint": "npm run lint:css && npm run lint:js",
+    "lint:css": "stylelint \"assets/css/**/*.css\" \"public/css/**/*.css\"",
+    "lint:js": "eslint \"assets/js/**/*.js\" \"public/js/**/*.js\" \"admin/js/**/*.js\"",
+    "optimize": "npm run build && npm run optimize:images",
+    "optimize:images": "imagemin assets/images/* --out-dir=assets/images/optimized",
+    "dev": "npm run watch",
+    "serve": "browser-sync start --proxy \"localhost\" --files \"**/*.css,**/*.js,**/*.php\""
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "clean-css-cli": "^5.6.2",
+    "terser": "^5.19.2",
+    "chokidar-cli": "^3.0.0",
+    "stylelint": "^15.10.2",
+    "stylelint-config-standard": "^34.0.0",
+    "eslint": "^8.45.0",
+    "imagemin": "^8.0.1",
+    "imagemin-mozjpeg": "^10.0.0",
+    "imagemin-pngquant": "^9.0.2",
+    "browser-sync": "^2.29.3",
+    "postcss": "^8.4.27",
+    "autoprefixer": "^10.4.14"
+  },
+  "keywords": [
+    "wordpress",
+    "crm",
+    "insurance",
+    "plugin",
+    "modern",
+    "responsive"
+  ],
+  "author": "Mehmet BALKAY | Anadolu Birlik",
+  "license": "GPL-2.0+",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mbalkay/CRMX.git"
+  }
+}

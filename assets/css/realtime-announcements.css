@@ -1,0 +1,594 @@
+/*
+ * Real-time Announcements CSS
+ * Modern notification system styling
+ * Version: 2.0.0
+ */
+
+/* Notifications Container */
+.insurance-crm-notifications-container {
+    position: fixed;
+    top: 32px;
+    right: -400px;
+    width: 380px;
+    height: calc(100vh - 32px);
+    background: #fff;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 999999;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.insurance-crm-notifications-container.active {
+    right: 0;
+}
+
+/* Notifications Header */
+.notifications-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #2271b1 0%, #1e5a8a 100%);
+    color: #fff;
+    border-bottom: 1px solid #ddd;
+}
+
+.notifications-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.unread-count {
+    background: #ff4444;
+    color: #fff;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+    display: none;
+}
+
+.notifications-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.notifications-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Notifications Content */
+.notifications-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    background: #f8f9fa;
+}
+
+.notifications-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notifications-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.notifications-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.notifications-content::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Individual Notification Items */
+.notification-item {
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 15px 20px;
+    transition: background 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.notification-item:hover {
+    background: #f8f9fa;
+}
+
+.notification-item.unread {
+    border-left: 4px solid #2271b1;
+    background: #f0f8ff;
+}
+
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 8px;
+    width: 8px;
+    height: 8px;
+    background: #2271b1;
+    border-radius: 50%;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.notification-header strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.3;
+    flex: 1;
+    margin-right: 10px;
+}
+
+.notification-time {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+}
+
+.notification-content {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.notification-actions button {
+    padding: 4px 12px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #333;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.notification-actions button:hover {
+    background: #f0f0f0;
+    border-color: #bbb;
+}
+
+.notification-actions .mark-read {
+    color: #2271b1;
+    border-color: #2271b1;
+}
+
+.notification-actions .mark-read:hover {
+    background: #2271b1;
+    color: #fff;
+}
+
+/* Notifications Footer */
+.notifications-footer {
+    padding: 15px 20px;
+    background: #fff;
+    border-top: 1px solid #ddd;
+}
+
+.mark-all-read {
+    width: 100%;
+    padding: 10px;
+    background: #2271b1;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.mark-all-read:hover {
+    background: #1e5a8a;
+}
+
+/* No Notifications State */
+.no-notifications {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Loading State */
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Notification Bell in Admin Bar */
+#wp-admin-bar-insurance-crm-notifications .ab-icon:before {
+    content: '\f142';
+    font-family: dashicons;
+}
+
+.notification-count {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background: #dc3232;
+    color: #fff;
+    border-radius: 8px;
+    padding: 1px 5px;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 16px;
+    text-align: center;
+    display: none;
+    line-height: 1.2;
+}
+
+/* Toast Notifications */
+.insurance-crm-toast-container {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    z-index: 999998;
+    max-width: 400px;
+}
+
+.insurance-crm-toast {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 10px;
+    overflow: hidden;
+    animation: slideInRight 0.3s ease;
+    border-left: 4px solid #2271b1;
+}
+
+.insurance-crm-toast.urgent {
+    border-left-color: #dc3232;
+    animation: slideInRight 0.3s ease, pulse 2s infinite;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    50% {
+        box-shadow: 0 4px 12px rgba(220, 50, 50, 0.3);
+    }
+}
+
+.toast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px 8px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+}
+
+.toast-header strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-close:hover {
+    color: #333;
+}
+
+.toast-body {
+    padding: 12px 15px;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.4;
+}
+
+.toast-actions {
+    display: flex;
+    gap: 8px;
+    padding: 8px 15px 12px;
+}
+
+.toast-actions button {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #333;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toast-actions button:hover {
+    background: #f0f0f0;
+}
+
+.toast-mark-read {
+    color: #2271b1 !important;
+    border-color: #2271b1 !important;
+}
+
+.toast-mark-read:hover {
+    background: #2271b1 !important;
+    color: #fff !important;
+}
+
+.toast-view {
+    color: #00a32a !important;
+    border-color: #00a32a !important;
+}
+
+.toast-view:hover {
+    background: #00a32a !important;
+    color: #fff !important;
+}
+
+/* Connection Status Indicator */
+#insurance-crm-connection-status {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    z-index: 999997;
+    transition: all 0.3s ease;
+}
+
+#insurance-crm-connection-status.connected {
+    background: #00a32a;
+    box-shadow: 0 0 6px rgba(0, 163, 42, 0.4);
+}
+
+#insurance-crm-connection-status.disconnected {
+    background: #dc3232;
+    box-shadow: 0 0 6px rgba(220, 50, 50, 0.4);
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0.3;
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .insurance-crm-notifications-container {
+        width: 100%;
+        right: -100%;
+        top: 46px;
+        height: calc(100vh - 46px);
+    }
+    
+    .insurance-crm-toast-container {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+        top: 60px;
+    }
+    
+    .insurance-crm-toast {
+        margin-bottom: 8px;
+    }
+    
+    .notification-item {
+        padding: 12px 15px;
+    }
+    
+    .notification-header strong {
+        font-size: 13px;
+    }
+    
+    .notification-content {
+        font-size: 12px;
+    }
+    
+    .notification-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .notification-actions button {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .notifications-header {
+        padding: 12px 15px;
+    }
+    
+    .notifications-header h3 {
+        font-size: 14px;
+    }
+    
+    .toast-header,
+    .toast-body,
+    .toast-actions {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .toast-body {
+        font-size: 12px;
+    }
+    
+    .toast-actions button {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .notification-item.unread {
+        border-left-width: 6px;
+    }
+    
+    .insurance-crm-toast {
+        border-left-width: 6px;
+    }
+    
+    .notifications-header {
+        background: #000;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .insurance-crm-notifications-container,
+    .insurance-crm-toast,
+    .notification-item,
+    .notification-actions button,
+    .mark-all-read,
+    #insurance-crm-connection-status {
+        transition: none;
+    }
+    
+    .insurance-crm-toast {
+        animation: none;
+    }
+    
+    .insurance-crm-toast.urgent {
+        animation: none;
+    }
+    
+    #insurance-crm-connection-status.disconnected {
+        animation: none;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .insurance-crm-notifications-container {
+        background: #1e1e1e;
+        color: #fff;
+    }
+    
+    .notifications-content {
+        background: #2d2d2d;
+    }
+    
+    .notification-item {
+        background: #1e1e1e;
+        border-bottom-color: #444;
+        color: #fff;
+    }
+    
+    .notification-item:hover {
+        background: #333;
+    }
+    
+    .notification-item.unread {
+        background: #1a2332;
+    }
+    
+    .notification-header strong {
+        color: #fff;
+    }
+    
+    .notification-content {
+        color: #ccc;
+    }
+    
+    .notification-actions button {
+        background: #333;
+        color: #fff;
+        border-color: #555;
+    }
+    
+    .notification-actions button:hover {
+        background: #444;
+    }
+    
+    .notifications-footer {
+        background: #1e1e1e;
+        border-top-color: #444;
+    }
+    
+    .insurance-crm-toast {
+        background: #1e1e1e;
+        color: #fff;
+    }
+    
+    .toast-header {
+        background: #333;
+        border-bottom-color: #555;
+    }
+    
+    .toast-header strong {
+        color: #fff;
+    }
+    
+    .toast-body {
+        color: #ccc;
+    }
+    
+    .toast-actions button {
+        background: #333;
+        color: #fff;
+        border-color: #555;
+    }
+    
+    .no-notifications,
+    .loading {
+        color: #999;
+    }
+}
