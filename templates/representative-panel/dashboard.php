@@ -6959,7 +6959,7 @@ window.addEventListener('resize', function() {
                 margin-top: 10px;
                 display: none;
                 overflow: hidden;
-                z-index: 1000;
+                z-index: 10001;
             }
             
             .notifications-dropdown.show {
@@ -7090,7 +7090,7 @@ window.addEventListener('resize', function() {
                 margin-top: 10px;
                 display: none;
                 overflow: hidden;
-                z-index: 1000;
+                z-index: 10001;
             }
             .quick-add-dropdown.show {
                 display: block;
