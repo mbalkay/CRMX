@@ -310,6 +310,11 @@ function insurance_crm_init_daily_notifications() {
     require_once plugin_dir_path(__FILE__) . 'includes/notifications/class-notification-scheduler.php';
     require_once plugin_dir_path(__FILE__) . 'includes/notifications/class-enhanced-email-notifications.php';
     
+    // Load validation file (admin only)
+    if (is_admin()) {
+        require_once plugin_dir_path(__FILE__) . 'includes/notifications/validation.php';
+    }
+    
     // Initialize notification scheduler
     new Insurance_CRM_Notification_Scheduler();
 }
