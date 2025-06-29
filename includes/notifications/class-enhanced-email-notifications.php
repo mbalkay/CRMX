@@ -182,7 +182,7 @@ class Insurance_CRM_Enhanced_Email_Notifications {
             $user_id
         ));
         
-        // Expiring policies (next 30 days)
+        // Expiring policies (next 7 days as requested)
         $data['policies_expiring'] = $wpdb->get_results($wpdb->prepare(
             "SELECT p.*, c.first_name, c.last_name, c.email, c.phone
              FROM {$wpdb->prefix}insurance_crm_policies p
@@ -192,7 +192,7 @@ class Insurance_CRM_Enhanced_Email_Notifications {
                  WHERE user_id = %d AND status = 'active'
              )
              AND p.status = 'aktif'
-             AND p.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+             AND p.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
              ORDER BY p.end_date ASC",
             $user_id
         ));
