@@ -1402,29 +1402,61 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
             </div>
         </div>
 
-        <!-- Step 1: File Upload -->
-        <div class="import-step">
-            <div class="step-header">
-                <h2><span class="step-number">1</span> Manuel Dosya Yükleme</h2>
-                <p>Aktarmak istediğiniz CSV veya Excel dosyasını seçin</p>
-            </div>
-            
-            <form method="post" enctype="multipart/form-data" class="upload-form">
-                <div class="upload-area">
-                    <div class="upload-icon">
-                        <i class="dashicons dashicons-media-document"></i>
-                    </div>
-                    <div class="upload-content">
-                        <h3>Dosya Seçin</h3>
-                        <p>CSV, XLS veya XLSX formatında dosyalar desteklenir</p>
-                        <input type="file" name="csv_file" accept=".csv,.xlsx,.xls" required class="file-input">
-                        <button type="submit" name="upload_file" class="btn btn-primary">
-                            <i class="dashicons dashicons-upload"></i> Dosyayı Yükle
-                        </button>
-                    </div>
+        <?php if (!isset($_GET['manual_upload'])): ?>
+            <!-- Manual Upload Selection Card -->
+            <div class="import-step">
+                <div class="step-header">
+                    <h2><span class="step-number">1</span> Manuel Dosya Yükleme</h2>
+                    <p>CSV ve Excel dosyalarından veri aktarımı yapın</p>
                 </div>
-            </form>
-        </div>
+                
+                <div class="special-import-options">
+                    <a href="?view=veri_aktar&manual_upload=1" class="special-import-button manual-import">
+                        <div class="import-icon">
+                            <i class="dashicons dashicons-media-document"></i>
+                        </div>
+                        <div class="import-content">
+                            <h3>Manuel Dosya Yükleme</h3>
+                            <p>CSV, XLS veya XLSX dosyalarından veri aktarın</p>
+                        </div>
+                        <div class="import-arrow">
+                            <i class="dashicons dashicons-arrow-right-alt2"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        <?php else: ?>
+            <!-- Step 1: File Upload Form -->
+            <div class="import-step">
+                <div class="step-header">
+                    <h2><span class="step-number">1</span> Manuel Dosya Yükleme</h2>
+                    <p>Aktarmak istediğiniz CSV veya Excel dosyasını seçin</p>
+                </div>
+                
+                <form method="post" enctype="multipart/form-data" class="upload-form">
+                    <div class="upload-area">
+                        <div class="upload-icon">
+                            <i class="dashicons dashicons-media-document"></i>
+                        </div>
+                        <div class="upload-content">
+                            <h3>Dosya Seçin</h3>
+                            <p>CSV, XLS veya XLSX formatında dosyalar desteklenir</p>
+                            <input type="file" name="csv_file" accept=".csv,.xlsx,.xls" required class="file-input">
+                            <button type="submit" name="upload_file" class="btn btn-primary">
+                                <i class="dashicons dashicons-upload"></i> Dosyayı Yükle
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="back-button">
+                    <a href="?view=veri_aktar" class="btn btn-outline">
+                        <i class="dashicons dashicons-arrow-left-alt2"></i>
+                        Veri Aktar Sayfasına Dön
+                    </a>
+                </div>
+            </div>
+        <?php endif; ?>
 
     <?php elseif ($import_step == 2 && $csv_data): ?>
         <!-- Step 2: Column Mapping -->
@@ -1967,6 +1999,16 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
     color: #1877f2;
 }
 
+.manual-import {
+    border-color: #0073aa;
+}
+
+.manual-import:hover {
+    border-color: #0073aa;
+    background: #f0f8ff;
+    color: #0073aa;
+}
+
 .special-import-button .import-icon {
     margin-right: 15px;
 }
@@ -1977,6 +2019,10 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 
 .facebook-import .import-icon i {
     color: #1877f2;
+}
+
+.manual-import .import-icon i {
+    color: #0073aa;
 }
 
 .special-import-button .import-content h3 {
@@ -2416,6 +2462,23 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 .btn-secondary:hover {
     background: #5a6268;
     color: white;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #0073aa;
+    border: 1px solid #0073aa;
+}
+
+.btn-outline:hover {
+    background: #0073aa;
+    color: white;
+    text-decoration: none;
+}
+
+.back-button {
+    text-align: center;
+    margin-top: 20px;
 }
 
 .ab-notice {
