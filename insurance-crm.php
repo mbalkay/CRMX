@@ -679,8 +679,16 @@ function insurance_crm_check_db_tables() {
         error_log('insurance_crm_representatives tablosuna target_policy_count sütunu eklendi.');
     }
     
+    // Avatar URL sütununu kontrol et ve ekle
+    $avatar_url_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_representatives LIKE 'avatar_url'");
+    
+    if (empty($avatar_url_exists)) {
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN avatar_url VARCHAR(255) DEFAULT '' AFTER target_policy_count");
+        error_log('insurance_crm_representatives tablosuna avatar_url sütunu eklendi.');
+    }
+    
     if (empty($min_policy_count_exists)) {
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN minimum_policy_count INT DEFAULT 10 AFTER target_policy_count");
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN minimum_policy_count INT DEFAULT 10 AFTER avatar_url");
         error_log('insurance_crm_representatives tablosuna minimum_policy_count sütunu eklendi.');
     }
     
