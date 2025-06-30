@@ -328,17 +328,45 @@ class Insurance_CRM_System_Logger {
         
         $params[] = $limit;
         
-        $activities = $wpdb->get_results($wpdb->prepare(
-            "SELECT 
+        // Placeholder ve parametre sayısını kontrol et
+        $activities_query = "SELECT 
                 sl.*,
                 u.display_name as user_name
              FROM {$wpdb->prefix}insurance_system_logs sl
              LEFT JOIN {$wpdb->users} u ON sl.user_id = u.ID
              {$where_clause}
              ORDER BY sl.created_at DESC
-             LIMIT %d",
-            ...$params
-        ));
+             LIMIT %d";
+             
+        $placeholder_count = substr_count($activities_query, '%');
+        $param_count = count($params);
+        
+        if ($placeholder_count === $param_count && $param_count > 0) {
+            $activities = $wpdb->get_results($wpdb->prepare($activities_query, ...$params));
+        } else {
+            error_log("Insurance CRM System Logger Activities: SQL placeholder mismatch. Placeholders: {$placeholder_count}, Parameters: {$param_count}");
+            // Fallback
+            if ($user_id) {
+                $activities = $wpdb->get_results($wpdb->prepare(
+                    "SELECT sl.*, u.display_name as user_name
+                     FROM {$wpdb->prefix}insurance_system_logs sl
+                     LEFT JOIN {$wpdb->users} u ON sl.user_id = u.ID
+                     WHERE sl.user_id = %d
+                     ORDER BY sl.created_at DESC
+                     LIMIT %d",
+                    $user_id, $limit
+                ));
+            } else {
+                $activities = $wpdb->get_results($wpdb->prepare(
+                    "SELECT sl.*, u.display_name as user_name
+                     FROM {$wpdb->prefix}insurance_system_logs sl
+                     LEFT JOIN {$wpdb->users} u ON sl.user_id = u.ID
+                     ORDER BY sl.created_at DESC
+                     LIMIT %d",
+                    $limit
+                ));
+            }
+        }
         
         return $activities;
     }
@@ -397,17 +425,37 @@ class Insurance_CRM_System_Logger {
         $params[] = $limit;
         $params[] = $offset;
         
-        $logs = $wpdb->get_results($wpdb->prepare(
-            "SELECT 
+        // Placeholder ve parametre sayısını kontrol et
+        $search_query = "SELECT 
                 sl.*,
                 u.display_name as user_name
              FROM {$wpdb->prefix}insurance_system_logs sl
              LEFT JOIN {$wpdb->users} u ON sl.user_id = u.ID
              {$where_clause}
              ORDER BY sl.created_at DESC
-             LIMIT %d OFFSET %d",
-            ...$params
-        ));
+             LIMIT %d OFFSET %d";
+             
+        $placeholder_count = substr_count($search_query, '%');
+        $param_count = count($params);
+        
+        if ($placeholder_count === $param_count && $param_count > 0) {
+            $logs = $wpdb->get_results($wpdb->prepare($search_query, ...$params));
+        } else {
+            error_log("Insurance CRM System Logger Search: SQL placeholder mismatch. Placeholders: {$placeholder_count}, Parameters: {$param_count}");
+            // Fallback
+            if (empty($where_conditions)) {
+                $logs = $wpdb->get_results($wpdb->prepare(
+                    "SELECT sl.*, u.display_name as user_name
+                     FROM {$wpdb->prefix}insurance_system_logs sl
+                     LEFT JOIN {$wpdb->users} u ON sl.user_id = u.ID
+                     ORDER BY sl.created_at DESC
+                     LIMIT %d OFFSET %d",
+                    $limit, $offset
+                ));
+            } else {
+                $logs = [];
+            }
+        }
         
         return $logs;
     }
@@ -463,10 +511,20 @@ class Insurance_CRM_System_Logger {
             $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
         }
         
-        $count = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_system_logs {$where_clause}",
-            ...$params
-        ));
+        // Placeholder ve parametre sayısını kontrol et
+        $count_query = "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_system_logs {$where_clause}";
+        $placeholder_count = substr_count($count_query, '%');
+        $param_count = count($params);
+        
+        if ($placeholder_count === $param_count && $param_count > 0) {
+            $count = $wpdb->get_var($wpdb->prepare($count_query, ...$params));
+        } else if ($placeholder_count === 0 && $param_count === 0) {
+            // WHERE clause yoksa prepare kullanma
+            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}insurance_system_logs");
+        } else {
+            error_log("Insurance CRM System Logger Count: SQL placeholder mismatch. Placeholders: {$placeholder_count}, Parameters: {$param_count}");
+            $count = 0;
+        }
         
         return $count;
     }

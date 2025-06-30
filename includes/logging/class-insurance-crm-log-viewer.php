@@ -306,24 +306,53 @@ class Insurance_CRM_Log_Viewer {
         $params[] = $per_page;
         $params[] = $offset;
         
-        $logs = $wpdb->get_results($wpdb->prepare(
-            "SELECT 
+        // Placeholder ve parametre sayısını kontrol et
+        $base_query = "SELECT 
                 ul.*,
                 u.display_name as user_name
              FROM {$wpdb->prefix}insurance_user_logs ul
              LEFT JOIN {$wpdb->users} u ON ul.user_id = u.ID
              {$where_clause}
              ORDER BY ul.created_at DESC
-             LIMIT %d OFFSET %d",
-            ...$params
-        ));
+             LIMIT %d OFFSET %d";
+             
+        $placeholder_count = substr_count($base_query, '%');
+        $param_count = count($params);
         
-        // Get total count
-        $count_params = array_slice($params, 0, -2);
-        $total_logs = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_user_logs ul {$where_clause}",
-            ...$count_params
-        ));
+        if ($placeholder_count === $param_count && $param_count > 0) {
+            $logs = $wpdb->get_results($wpdb->prepare($base_query, ...$params));
+        } else {
+            error_log("Insurance CRM Log Viewer: SQL placeholder mismatch. Placeholders: {$placeholder_count}, Parameters: {$param_count}");
+            // Fallback without prepare if no parameters needed
+            if ($param_count === 2 && empty($where_conditions)) {
+                $logs = $wpdb->get_results($wpdb->prepare(
+                    "SELECT ul.*, u.display_name as user_name
+                     FROM {$wpdb->prefix}insurance_user_logs ul
+                     LEFT JOIN {$wpdb->users} u ON ul.user_id = u.ID
+                     ORDER BY ul.created_at DESC
+                     LIMIT %d OFFSET %d",
+                    $per_page, $offset
+                ));
+            } else {
+                $logs = [];
+            }
+        }
+        
+        // Get total count - parametre sayısını kontrol et
+        $count_params = array_slice($params, 0, -2); // son 2 parametreyi çıkar (limit ve offset)
+        $count_query = "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_user_logs ul {$where_clause}";
+        $count_placeholder_count = substr_count($count_query, '%');
+        $count_param_count = count($count_params);
+        
+        if ($count_placeholder_count === $count_param_count && $count_param_count > 0) {
+            $total_logs = $wpdb->get_var($wpdb->prepare($count_query, ...$count_params));
+        } else if ($count_placeholder_count === 0 && $count_param_count === 0) {
+            // WHERE clause yoksa prepare kullanma
+            $total_logs = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}insurance_user_logs ul");
+        } else {
+            error_log("Insurance CRM Log Viewer Count: SQL placeholder mismatch. Placeholders: {$count_placeholder_count}, Parameters: {$count_param_count}");
+            $total_logs = 0;
+        }
         
         ?>
         <h2><?php _e('Kullanıcı Giriş Logları', 'insurance-crm'); ?></h2>
@@ -763,16 +792,27 @@ class Insurance_CRM_Log_Viewer {
                 $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
             }
             
-            $logs = $wpdb->get_results($wpdb->prepare(
-                "SELECT 
+            // Placeholder ve parametre sayısını kontrol et
+            $csv_query = "SELECT 
                     ul.*,
                     u.display_name as user_name
                  FROM {$wpdb->prefix}insurance_user_logs ul
                  LEFT JOIN {$wpdb->users} u ON ul.user_id = u.ID
                  {$where_clause}
-                 ORDER BY ul.created_at DESC",
-                ...$params
-            ));
+                 ORDER BY ul.created_at DESC";
+                 
+            $placeholder_count = substr_count($csv_query, '%');
+            $param_count = count($params);
+            
+            if ($placeholder_count === $param_count && $param_count > 0) {
+                $logs = $wpdb->get_results($wpdb->prepare($csv_query, ...$params));
+            } else if ($placeholder_count === 0 && $param_count === 0) {
+                // WHERE clause yoksa prepare kullanma
+                $logs = $wpdb->get_results($csv_query);
+            } else {
+                error_log("Insurance CRM CSV Export: SQL placeholder mismatch. Placeholders: {$placeholder_count}, Parameters: {$param_count}");
+                $logs = [];
+            }
             
             foreach ($logs as $log) {
                 fputcsv($output, array(

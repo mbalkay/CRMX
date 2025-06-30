@@ -354,24 +354,37 @@ if (!class_exists('ModernPolicyManager')) {
 
             if ($this->user_role_level >= 4) {
                 $team_ids = $this->getTeamMemberIds();
-                if (!empty($team_ids)) {
+                if (!empty($team_ids) && count($team_ids) > 0) {
                     $placeholders = implode(',', array_fill(0, count($team_ids), '%d'));
                     $conditions[] = "representative_id IN ({$placeholders})";
                     $params = array_merge($params, $team_ids);
                 } else {
-                    $conditions[] = "representative_id = %d";
-                    $params[] = $this->user_rep_id;
+                    // Eğer geçerli team_ids yoksa, hiçbir şeyi güncelleme
+                    return;
                 }
             }
 
+            // Placeholder ve parametre sayısını kontrol et
             $sql = "UPDATE {$this->tables['policies']} SET status = 'pasif' WHERE " . implode(' AND ', $conditions);
-            $this->wpdb->query($this->wpdb->prepare($sql, ...$params));
+            $placeholder_count = substr_count($sql, '%');
+            $param_count = count($params);
+            
+            if ($placeholder_count === $param_count && $param_count > 0) {
+                $this->wpdb->query($this->wpdb->prepare($sql, ...$params));
+            } else {
+                error_log("Insurance CRM: SQL placeholder mismatch in auto-update query. Placeholders: {$placeholder_count}, Parameters: {$param_count}");
+            }
             
             set_transient($cache_key, true, DAY_IN_SECONDS);
         }
 
         private function getTeamMemberIds(): array {
-            if ($this->user_role_level > 4 || $this->user_rep_id === 0) {
+            // Geçersiz rep_id varsa boş dizi döndür
+            if ($this->user_rep_id === 0 || $this->user_rep_id < 1) {
+                return [];
+            }
+            
+            if ($this->user_role_level > 4) {
                 return [$this->user_rep_id];
             }
 
@@ -381,7 +394,11 @@ if (!class_exists('ModernPolicyManager')) {
             foreach ($teams as $team) {
                 if (($team['leader_id'] ?? 0) == $this->user_rep_id) {
                     $members = $team['members'] ?? [];
-                    return array_unique(array_merge($members, [$this->user_rep_id]));
+                    // Sadece geçerli ID'leri filtrele
+                    $valid_members = array_filter($members, function($id) {
+                        return is_numeric($id) && $id > 0;
+                    });
+                    return array_unique(array_merge($valid_members, [$this->user_rep_id]));
                 }
             }
             
