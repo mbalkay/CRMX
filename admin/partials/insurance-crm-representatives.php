@@ -21,7 +21,7 @@ if (file_exists(plugin_dir_path(__FILE__) . '../../includes/dashboard-functions.
 // Get current action and parameters
 $action = isset($_GET["action"]) ? sanitize_text_field($_GET["action"]) : "";
 $rep_id = isset($_GET["edit"]) ? intval($_GET["edit"]) : 0;
-$editing = ($action === "edit" && $rep_id > 0);
+$editing = ($rep_id > 0); // Restore original behavior: editing when edit parameter exists
 $adding = ($action === "new");
 $edit_rep = null;
 
@@ -231,12 +231,16 @@ global $wpdb;
 $table_name = $wpdb->prefix . "insurance_crm_representatives";
 
 // Build WHERE clause for filtering
-$where_conditions = array("r.status != 'deleted'");
+$where_conditions = array();
 $where_params = array();
 
 if ($status_filter !== "all") {
     $where_conditions[] = "r.status = %s";
     $where_params[] = $status_filter;
+} else {
+    // Default behavior: show only active representatives (matching original behavior)
+    $where_conditions[] = "r.status = %s";
+    $where_params[] = 'active';
 }
 
 if ($role_filter !== "all") {
@@ -257,6 +261,19 @@ if (!empty($where_params)) {
     $representatives = $wpdb->get_results($wpdb->prepare($query, ...$where_params));
 } else {
     $representatives = $wpdb->get_results($query);
+}
+
+// Debug information (for development only - should be removed in production)
+if (isset($_GET['debug']) && $_GET['debug'] === '1') {
+    echo '<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc;">';
+    echo '<strong>Debug Info:</strong><br>';
+    echo 'Query: ' . $query . '<br>';
+    echo 'Where params: ' . print_r($where_params, true) . '<br>';
+    echo 'Representatives count: ' . count($representatives) . '<br>';
+    if ($wpdb->last_error) {
+        echo 'DB Error: ' . $wpdb->last_error . '<br>';
+    }
+    echo '</div>';
 }
 
 // Calculate statistics
@@ -924,6 +941,32 @@ unset($rep); // Break reference
     padding-top: var(--spacing-lg);
     border-top: 1px solid var(--gray-200);
 }
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+}
+
+.empty-state h3 {
+    color: var(--gray-700);
+    margin: var(--spacing-md) 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.empty-state p {
+    color: var(--gray-600);
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: 14px;
+}
+
+.no-representatives-message {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
 </style>
 
 <div class="modern-admin-container">
@@ -1126,6 +1169,19 @@ unset($rep); // Break reference
                 </div>
             </div>
             <?php endforeach; ?>
+            <?php if (empty($representatives)): ?>
+            <div class="no-representatives-message">
+                <div class="empty-state">
+                    <i class="dashicons dashicons-admin-users" style="font-size: 48px; color: var(--gray-400);"></i>
+                    <h3>Henüz temsilci bulunmuyor</h3>
+                    <p>Sistemde hiç temsilci kaydı bulunamadı. İlk temsilciyi eklemek için aşağıdaki butona tıklayın.</p>
+                    <a href="<?php echo admin_url('admin.php?page=insurance-crm-representatives&action=new'); ?>" 
+                       class="btn-modern btn-primary">
+                        <i class="dashicons dashicons-plus"></i> Yeni Temsilci Ekle
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
         <?php else: ?>
         <!-- List View -->
@@ -1203,6 +1259,21 @@ unset($rep); // Break reference
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    <?php if (empty($representatives)): ?>
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px;">
+                            <div class="empty-state">
+                                <i class="dashicons dashicons-admin-users" style="font-size: 48px; color: var(--gray-400);"></i>
+                                <h3>Henüz temsilci bulunmuyor</h3>
+                                <p>Sistemde hiç temsilci kaydı bulunamadı. İlk temsilciyi eklemek için aşağıdaki butona tıklayın.</p>
+                                <a href="<?php echo admin_url('admin.php?page=insurance-crm-representatives&action=new'); ?>" 
+                                   class="btn-modern btn-primary">
+                                    <i class="dashicons dashicons-plus"></i> Yeni Temsilci Ekle
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
