@@ -353,7 +353,11 @@ class Insurance_CRM_License_API {
             );
         }
 
-        error_log('[LISANS DEBUG] Başarılı yanıt alındı: ' . json_encode($decoded_response));
+        // Only log successful responses during periodic/daily checks to reduce debug.log spam
+        $is_periodic_check = defined('INSURANCE_CRM_PERIODIC_LICENSE_CHECK') && INSURANCE_CRM_PERIODIC_LICENSE_CHECK;
+        if ($should_log || $is_periodic_check) {
+            error_log('[LISANS DEBUG] Başarılı yanıt alındı: ' . json_encode($decoded_response));
+        }
         return $decoded_response;
     }
 
