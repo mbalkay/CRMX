@@ -94,6 +94,7 @@ class Insurance_CRM_Activator {
             phone varchar(20) NOT NULL,
             department varchar(100) NOT NULL,
             monthly_target decimal(10,2) DEFAULT 0.00,
+            target_policy_count int(11) DEFAULT 10,
             minimum_policy_count int(11) DEFAULT 10,
             minimum_premium_amount decimal(10,2) DEFAULT 300000.00,
             role int(1) DEFAULT 4,
@@ -678,6 +679,7 @@ class Insurance_CRM_Activator {
         
         // Define columns to add
         $columns_to_add = array(
+            'target_policy_count' => "ADD COLUMN target_policy_count int(11) DEFAULT 10 COMMENT 'Monthly policy count target'",
             'minimum_policy_count' => "ADD COLUMN minimum_policy_count int(11) DEFAULT 10 COMMENT 'Minimum monthly policy count target'",
             'minimum_premium_amount' => "ADD COLUMN minimum_premium_amount decimal(10,2) DEFAULT 300000.00 COMMENT 'Minimum monthly premium amount target'",
             'role' => "ADD COLUMN role int(1) DEFAULT 4 COMMENT 'User role: 1=Patron, 2=Müdür, 3=Team Leader, 4=Representative'",
