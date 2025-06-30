@@ -124,7 +124,12 @@ function insurance_crm_check_admin_page_access() {
     
     // Check if data access is allowed
     if (!insurance_crm_can_access_data()) {
-        error_log('[LISANS DEBUG] Admin page access denied - redirecting to license page');
+        // Throttle access denial logging - only log once per hour to reduce debug.log size
+        $last_access_log = get_option('insurance_crm_license_last_access_log', '');
+        if (empty($last_access_log) || strtotime($last_access_log) < (time() - 60 * 60)) {
+            error_log('[LISANS DEBUG] Admin page access denied - redirecting to license page');
+            update_option('insurance_crm_license_last_access_log', current_time('mysql'));
+        }
         // Redirect to license page with restriction notice
         wp_redirect(admin_url('admin.php?page=insurance-crm-license&restriction=data'));
         exit;
@@ -140,7 +145,12 @@ function insurance_crm_check_admin_page_access() {
     
     if (isset($page_modules[$_GET['page']])) {
         if (!insurance_crm_can_access_module($page_modules[$_GET['page']])) {
-            error_log('[LISANS DEBUG] Module access denied: ' . $page_modules[$_GET['page']]);
+            // Throttle module access denial logging - only log once per hour to reduce debug.log size
+            $last_module_access_log = get_option('insurance_crm_license_last_module_access_log', '');
+            if (empty($last_module_access_log) || strtotime($last_module_access_log) < (time() - 60 * 60)) {
+                error_log('[LISANS DEBUG] Module access denied: ' . $page_modules[$_GET['page']]);
+                update_option('insurance_crm_license_last_module_access_log', current_time('mysql'));
+            }
             insurance_crm_display_license_restriction('module');
             exit;
         }
@@ -299,7 +309,12 @@ function insurance_crm_check_ajax_access() {
     
     // Check general data access
     if (!insurance_crm_can_access_data()) {
-        error_log('[LISANS DEBUG] AJAX access denied for action: ' . $_POST['action']);
+        // Throttle AJAX access denial logging - only log once per hour to reduce debug.log size
+        $last_ajax_log = get_option('insurance_crm_license_last_ajax_log', '');
+        if (empty($last_ajax_log) || strtotime($last_ajax_log) < (time() - 60 * 60)) {
+            error_log('[LISANS DEBUG] AJAX access denied for action: ' . $_POST['action']);
+            update_option('insurance_crm_license_last_ajax_log', current_time('mysql'));
+        }
         
         $license_info = $insurance_crm_license_manager ? $insurance_crm_license_manager->get_license_info() : array();
         $error_message = 'Lisans süresi dolmuş. Lütfen lisansınızı yenileyin.';
@@ -329,7 +344,12 @@ function insurance_crm_check_ajax_access() {
     if (isset($_POST['module'])) {
         $module = sanitize_text_field($_POST['module']);
         if (!insurance_crm_can_access_module($module)) {
-            error_log('[LISANS DEBUG] AJAX module access denied: ' . $module . ' for action: ' . $_POST['action']);
+            // Throttle AJAX module access denial logging - only log once per hour to reduce debug.log size
+            $last_ajax_module_log = get_option('insurance_crm_license_last_ajax_module_log', '');
+            if (empty($last_ajax_module_log) || strtotime($last_ajax_module_log) < (time() - 60 * 60)) {
+                error_log('[LISANS DEBUG] AJAX module access denied: ' . $module . ' for action: ' . $_POST['action']);
+                update_option('insurance_crm_license_last_ajax_module_log', current_time('mysql'));
+            }
             
             // Get detailed module restriction information
             global $insurance_crm_module_restrictions;

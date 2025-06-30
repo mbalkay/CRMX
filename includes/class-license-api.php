@@ -269,11 +269,16 @@ class Insurance_CRM_License_API {
             }
         }
 
-        // Her zaman debug bilgilerini logla
-        error_log('[LISANS DEBUG] İstek URL: ' . $url);
-        error_log('[LISANS DEBUG] İstek Metodu: ' . $method);
-        error_log('[LISANS DEBUG] İstek Verisi: ' . json_encode($data));
-        error_log('[LISANS DEBUG] İstek Başlıkları: ' . json_encode($args['headers']));
+        // Throttle debug logging to reduce debug.log size - only log once per day
+        $last_api_log = get_option('insurance_crm_license_last_api_log', '');
+        $should_log = $this->debug_mode || empty($last_api_log) || strtotime($last_api_log) < (time() - 24 * 60 * 60);
+        
+        if ($should_log) {
+            error_log('[LISANS DEBUG] İstek URL: ' . $url);
+            error_log('[LISANS DEBUG] İstek Metodu: ' . $method);
+            error_log('[LISANS DEBUG] İstek Verisi: ' . json_encode($data));
+            error_log('[LISANS DEBUG] İstek Başlıkları: ' . json_encode($args['headers']));
+        }
 
         $response = wp_remote_request($url, $args);
         
@@ -293,10 +298,13 @@ class Insurance_CRM_License_API {
         $response_headers = wp_remote_retrieve_headers($response);
 
         // Her zaman response bilgilerini logla
-        error_log('[LISANS DEBUG] Yanıt Kodu: ' . $response_code);
-        error_log('[LISANS DEBUG] Yanıt Boyutu: ' . strlen($response_body) . ' byte');
-        error_log('[LISANS DEBUG] Yanıt İçeriği (ilk 500 karakter): ' . substr($response_body, 0, 500));
-        error_log('[LISANS DEBUG] Yanıt Başlıkları: ' . json_encode($response_headers));
+        if ($should_log) {
+            error_log('[LISANS DEBUG] Yanıt Kodu: ' . $response_code);
+            error_log('[LISANS DEBUG] Yanıt Boyutu: ' . strlen($response_body) . ' byte');
+            error_log('[LISANS DEBUG] Yanıt İçeriği (ilk 500 karakter): ' . substr($response_body, 0, 500));
+            error_log('[LISANS DEBUG] Yanıt Başlıkları: ' . json_encode($response_headers));
+            update_option('insurance_crm_license_last_api_log', current_time('mysql'));
+        }
 
         // Başarılı HTTP kodlarını genişlet
         $successful_codes = array(200, 201, 202);
