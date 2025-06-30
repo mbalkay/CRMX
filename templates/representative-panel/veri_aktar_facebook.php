@@ -255,8 +255,6 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
 
 ?>
 
-?>
-
 <div class="facebook-import-container">
     <div class="import-header">
         <h1><i class="dashicons dashicons-facebook-alt"></i> Facebook Veri Aktar</h1>
