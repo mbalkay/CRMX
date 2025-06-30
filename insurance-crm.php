@@ -1,12 +1,5 @@
 <?php
 /**
- * Insurance CRM
- *
- * @package   Insurance_CRM
- * @author    Mehmet BALKAY | Anadolu Birlik
- * @copyright 2025 Anadolu Birlik
- * @license   GPL-2.0+
- *
  * Plugin Name: Insurance CRM
  * Plugin URI: https://github.com/anadolubirlik/insurance-crm
  * Description: Sigorta acenteleri için müşteri, poliçe ve görev yönetim sistemi.
@@ -14,6 +7,14 @@
  * Author: Mehmet BALKAY | Anadolu Birlik
  * Author URI: https://www.balkay.net
  * License: GPL-2.0+
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: insurance-crm
+ * Domain Path: /languages
+ *
+ * @package   Insurance_CRM
+ * @author    Mehmet BALKAY | Anadolu Birlik
+ * @copyright 2025 Anadolu Birlik
+ * @license   GPL-2.0+
  */
 
 if (!defined('WPINC')) {
