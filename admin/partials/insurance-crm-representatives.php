@@ -226,52 +226,76 @@ if (isset($_POST["submit_representative"]) && isset($_POST["representative_nonce
     }
 }
 
-// Get representatives with filtering
+// Get representatives - using original query structure for reliability
 global $wpdb;
 $table_name = $wpdb->prefix . "insurance_crm_representatives";
 
-// Build WHERE clause for filtering
-$where_conditions = array();
-$where_params = array();
+// Use the exact original query structure that was working
+$representatives = $wpdb->get_results(
+    "SELECT r.*, u.user_email as email, u.display_name, u.user_login as username,
+           u.first_name, u.last_name, u.ID as wp_user_id
+     FROM $table_name r 
+     LEFT JOIN {$wpdb->users} u ON r.user_id = u.ID 
+     WHERE r.status = 'active' 
+     ORDER BY r.created_at DESC"
+);
 
-if ($status_filter !== "all") {
-    $where_conditions[] = "r.status = %s";
-    $where_params[] = $status_filter;
-} else {
-    // Default behavior: show only active representatives (matching original behavior)
-    $where_conditions[] = "r.status = %s";
-    $where_params[] = 'active';
+// Apply additional filtering if requested (but keep original query as base)
+if (!empty($representatives)) {
+    // Apply role filter if specified
+    if ($role_filter !== "all") {
+        $filtered = array_filter($representatives, function($rep) use ($role_filter) {
+            return intval($rep->role) === intval($role_filter);
+        });
+        $representatives = array_values($filtered); // Re-index array
+    }
+    
+    // Apply status filter if not default
+    if ($status_filter !== "all" && $status_filter !== "active") {
+        // Re-query with different status
+        $representatives = $wpdb->get_results($wpdb->prepare(
+            "SELECT r.*, u.user_email as email, u.display_name, u.user_login as username,
+                   u.first_name, u.last_name, u.ID as wp_user_id
+             FROM $table_name r 
+             LEFT JOIN {$wpdb->users} u ON r.user_id = u.ID 
+             WHERE r.status = %s
+             ORDER BY r.created_at DESC",
+            $status_filter
+        ));
+        
+        // Apply role filter again if needed
+        if ($role_filter !== "all" && !empty($representatives)) {
+            $filtered = array_filter($representatives, function($rep) use ($role_filter) {
+                return intval($rep->role) === intval($role_filter);
+            });
+            $representatives = array_values($filtered);
+        }
+    }
 }
 
-if ($role_filter !== "all") {
-    $where_conditions[] = "r.role = %d";
-    $where_params[] = intval($role_filter);
-}
-
-$where_clause = implode(" AND ", $where_conditions);
-
-$query = "SELECT r.*, u.user_email as email, u.display_name, u.user_login as username,
-                 u.first_name, u.last_name, u.ID as wp_user_id
-          FROM $table_name r 
-          LEFT JOIN {$wpdb->users} u ON r.user_id = u.ID 
-          WHERE $where_clause
-          ORDER BY r.role ASC, r.created_at DESC";
-
-if (!empty($where_params)) {
-    $representatives = $wpdb->get_results($wpdb->prepare($query, ...$where_params));
-} else {
-    $representatives = $wpdb->get_results($query);
-}
-
-// Debug information (for development only - should be removed in production)
+// Debug information (for development only - should be removed in production)  
 if (isset($_GET['debug']) && $_GET['debug'] === '1') {
     echo '<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc;">';
     echo '<strong>Debug Info:</strong><br>';
-    echo 'Query: ' . $query . '<br>';
-    echo 'Where params: ' . print_r($where_params, true) . '<br>';
+    echo 'Table name: ' . $table_name . '<br>';
+    echo 'Status filter: ' . $status_filter . '<br>';
+    echo 'Role filter: ' . $role_filter . '<br>';
     echo 'Representatives count: ' . count($representatives) . '<br>';
+    
+    // Test raw queries
+    $total_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+    echo 'Total records in table: ' . $total_count . '<br>';
+    
+    $active_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE status = 'active'");
+    echo 'Active records in table: ' . $active_count . '<br>';
+    
     if ($wpdb->last_error) {
         echo 'DB Error: ' . $wpdb->last_error . '<br>';
+    }
+    
+    // Show sample records if any exist
+    if (!empty($representatives)) {
+        echo 'Sample representative: ID=' . $representatives[0]->id . ', Status=' . $representatives[0]->status . '<br>';
     }
     echo '</div>';
 }
@@ -298,37 +322,51 @@ $settings = get_option('insurance_crm_settings', array());
 $teams = isset($settings['teams_settings']['teams']) ? $settings['teams_settings']['teams'] : array();
 $active_teams_count = count($teams);
 
-// Get performance data for each representative
-foreach ($representatives as &$rep) {
-    // Get avatar URL
-    if (function_exists('get_user_avatar_url')) {
-        $rep->avatar_url = get_user_avatar_url($rep->user_id);
-    } else {
-        $rep->avatar_url = get_avatar_url($rep->user_id, array('size' => 96));
+// Get performance data for each representative (with error handling)
+if (!empty($representatives)) {
+    foreach ($representatives as &$rep) {
+        // Get avatar URL
+        if (function_exists('get_user_avatar_url')) {
+            $rep->avatar_url = get_user_avatar_url($rep->user_id);
+        } else {
+            $rep->avatar_url = get_avatar_url($rep->user_id, array('size' => 96));
+        }
+        
+        // Get last login
+        $rep->last_login = get_user_meta($rep->user_id, 'last_login', true);
+        
+        // Get performance stats with error handling
+        try {
+            $rep->customer_count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_customers WHERE representative_id = %d",
+                $rep->id
+            )) ?: 0;
+        } catch (Exception $e) {
+            $rep->customer_count = 0;
+        }
+        
+        try {
+            $rep->policy_count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_policies 
+                 WHERE representative_id = %d AND cancellation_date IS NULL",
+                $rep->id
+            )) ?: 0;
+        } catch (Exception $e) {
+            $rep->policy_count = 0;
+        }
+        
+        try {
+            $rep->total_premium = $wpdb->get_var($wpdb->prepare(
+                "SELECT SUM(policy_fee) FROM {$wpdb->prefix}insurance_crm_policies 
+                 WHERE representative_id = %d AND cancellation_date IS NULL",
+                $rep->id
+            )) ?: 0;
+        } catch (Exception $e) {
+            $rep->total_premium = 0;
+        }
     }
-    
-    // Get last login
-    $rep->last_login = get_user_meta($rep->user_id, 'last_login', true);
-    
-    // Get performance stats
-    $rep->customer_count = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_customers WHERE representative_id = %d",
-        $rep->id
-    )) ?: 0;
-    
-    $rep->policy_count = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}insurance_crm_policies 
-         WHERE representative_id = %d AND cancellation_date IS NULL",
-        $rep->id
-    )) ?: 0;
-    
-    $rep->total_premium = $wpdb->get_var($wpdb->prepare(
-        "SELECT SUM(policy_fee) FROM {$wpdb->prefix}insurance_crm_policies 
-         WHERE representative_id = %d AND cancellation_date IS NULL",
-        $rep->id
-    )) ?: 0;
+    unset($rep); // Break reference
 }
-unset($rep); // Break reference
 ?>
 
 <!-- Modern Admin Styles -->
