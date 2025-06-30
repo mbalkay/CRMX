@@ -409,6 +409,7 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
                                         <th>Sıra</th>
                                         <th>Temsilci Ataması</th>
                                         <th>Ad Soyad</th>
+                                        <th>Reklam Adı</th>
                                         <th>Email</th>
                                         <th>Telefon</th>
                                         <th>Şehir</th>
@@ -444,6 +445,7 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
                                                 <?php endif; ?>
                                             </td>
                                             <td><?php echo esc_html($customer_data['full_name']); ?></td>
+                                            <td><?php echo esc_html($customer_data['ad_name']); ?></td>
                                             <td><?php echo esc_html($customer_data['email']); ?></td>
                                             <td><?php echo esc_html($customer_data['phone_number']); ?></td>
                                             <td><?php echo esc_html($customer_data['city']); ?></td>
@@ -764,7 +766,7 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
 
 .facebook-preview-table {
     width: 100%;
-    min-width: 1425px; /* Reduced from 1600px by 175px due to smaller Temsilci column */
+    min-width: 1585px; /* Updated from 1425px + 160px for Reklam Adı column */
     border-collapse: collapse;
     font-size: 14px;
 }
@@ -802,21 +804,26 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
 }
 
 .facebook-preview-table th:nth-child(4) {
+    width: 160px; /* Reklam Adı */
+    min-width: 160px;
+}
+
+.facebook-preview-table th:nth-child(5) {
     width: 220px; /* Email */
     min-width: 220px;
 }
 
-.facebook-preview-table th:nth-child(5) {
+.facebook-preview-table th:nth-child(6) {
     width: 140px; /* Telefon */
     min-width: 140px;
 }
 
-.facebook-preview-table th:nth-child(6) {
+.facebook-preview-table th:nth-child(7) {
     width: 120px; /* Şehir */
     min-width: 120px;
 }
 
-.facebook-preview-table th:nth-child(7) {
+.facebook-preview-table th:nth-child(8) {
     width: 140px; /* TC Kimlik */
     min-width: 140px;
 }
@@ -844,21 +851,26 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
 }
 
 .facebook-preview-table td:nth-child(4) {
+    min-width: 160px; /* Reklam Adı */
+    width: 160px;
+}
+
+.facebook-preview-table td:nth-child(5) {
     min-width: 220px; /* Email */
     width: 220px;
 }
 
-.facebook-preview-table td:nth-child(5) {
+.facebook-preview-table td:nth-child(6) {
     min-width: 140px; /* Telefon */
     width: 140px;
 }
 
-.facebook-preview-table td:nth-child(6) {
+.facebook-preview-table td:nth-child(7) {
     min-width: 120px; /* Şehir */
     width: 120px;
 }
 
-.facebook-preview-table td:nth-child(7) {
+.facebook-preview-table td:nth-child(8) {
     min-width: 140px; /* TC Kimlik */
     width: 140px;
 }
@@ -915,19 +927,19 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
 /* Responsive Design */
 @media (max-width: 1800px) {
     .facebook-preview-table {
-        min-width: 1325px;
+        min-width: 1485px; /* Updated from 1325px + 160px */
     }
 }
 
 @media (max-width: 1600px) {
     .facebook-preview-table {
-        min-width: 1225px;
+        min-width: 1385px; /* Updated from 1225px + 160px */
     }
 }
 
 @media (max-width: 1400px) {
     .facebook-preview-table {
-        min-width: 1125px;
+        min-width: 1285px; /* Updated from 1125px + 160px */
     }
     
     .table-container {
@@ -938,7 +950,7 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
 
 @media (max-width: 1200px) {
     .facebook-preview-table {
-        min-width: 1025px;
+        min-width: 1185px; /* Updated from 1025px + 160px */
     }
     
     .table-container {
@@ -961,6 +973,12 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
     
     .facebook-preview-table th:nth-child(4),
     .facebook-preview-table td:nth-child(4) {
+        min-width: 150px; /* Reklam Adı */
+        width: 150px;
+    }
+    
+    .facebook-preview-table th:nth-child(5),
+    .facebook-preview-table td:nth-child(5) {
         min-width: 200px; /* Email */
         width: 200px;
     }
@@ -968,7 +986,7 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
 
 @media (max-width: 992px) {
     .facebook-preview-table {
-        min-width: 925px;
+        min-width: 1085px; /* Updated from 925px + 160px */
         font-size: 13px;
     }
     
@@ -992,6 +1010,12 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
     
     .facebook-preview-table td:nth-child(4),
     .facebook-preview-table th:nth-child(4) {
+        min-width: 140px; /* Reklam Adı */
+        width: 140px;
+    }
+    
+    .facebook-preview-table td:nth-child(5),
+    .facebook-preview-table th:nth-child(5) {
         min-width: 180px; /* Email */
         width: 180px;
     }
@@ -1005,7 +1029,7 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
     }
     
     .facebook-preview-table {
-        min-width: 825px;
+        min-width: 985px; /* Updated from 825px + 160px */
         font-size: 12px;
     }
     
@@ -1029,6 +1053,12 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
     
     .facebook-preview-table td:nth-child(4),
     .facebook-preview-table th:nth-child(4) {
+        min-width: 120px; /* Reklam Adı */
+        width: 120px;
+    }
+    
+    .facebook-preview-table td:nth-child(5),
+    .facebook-preview-table th:nth-child(5) {
         min-width: 170px; /* Email */
         width: 170px;
     }
@@ -1050,7 +1080,7 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
 
 @media (max-width: 576px) {
     .facebook-preview-table {
-        min-width: 725px;
+        min-width: 885px; /* Updated from 725px + 160px */
         font-size: 11px;
     }
     
@@ -1085,24 +1115,30 @@ $csv_data = isset($_SESSION['facebook_csv_data']) ? $_SESSION['facebook_csv_data
     
     .facebook-preview-table td:nth-child(4),
     .facebook-preview-table th:nth-child(4) {
-        min-width: 150px; /* Email */
-        width: 150px;
+        min-width: 110px; /* Reklam Adı */
+        width: 110px;
     }
     
     .facebook-preview-table td:nth-child(5),
     .facebook-preview-table th:nth-child(5) {
-        min-width: 110px; /* Telefon */
-        width: 110px;
+        min-width: 150px; /* Email */
+        width: 150px;
     }
     
     .facebook-preview-table td:nth-child(6),
     .facebook-preview-table th:nth-child(6) {
-        min-width: 100px; /* Şehir */
-        width: 100px;
+        min-width: 110px; /* Telefon */
+        width: 110px;
     }
     
     .facebook-preview-table td:nth-child(7),
     .facebook-preview-table th:nth-child(7) {
+        min-width: 100px; /* Şehir */
+        width: 100px;
+    }
+    
+    .facebook-preview-table td:nth-child(8),
+    .facebook-preview-table th:nth-child(8) {
         min-width: 120px; /* TC Kimlik */
         width: 120px;
     }
