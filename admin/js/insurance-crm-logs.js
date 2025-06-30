@@ -6,12 +6,18 @@
     'use strict';
 
     var InsuranceCRMLogs = {
+        cache: {},
+        autoRefreshInterval: null,
+        lastDataHash: null,
+        retryCount: 0,
+        maxRetries: 3,
         
         /**
          * Initialize
          */
         init: function() {
             this.bindEvents();
+            this.initPageVisibility();
             this.startAutoRefresh();
         },
         
@@ -36,10 +42,37 @@
         },
         
         /**
-         * Start auto refresh
+         * Initialize Page Visibility API
+         */
+        initPageVisibility: function() {
+            var self = this;
+            
+            // Pause auto-refresh when page is hidden
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    self.stopAutoRefresh();
+                } else {
+                    // Resume with a short delay when page becomes visible
+                    setTimeout(function() {
+                        self.startAutoRefresh();
+                    }, 1000);
+                }
+            });
+        },
+        
+        /**
+         * Start auto refresh with optimized interval
          */
         startAutoRefresh: function() {
-            this.autoRefreshInterval = setInterval(this.refreshLogs.bind(this), 30000); // 30 seconds
+            if (this.autoRefreshInterval) {
+                clearInterval(this.autoRefreshInterval);
+            }
+            
+            // Only start if page is visible
+            if (!document.hidden) {
+                // Increased from 30s to 120s (4x improvement)
+                this.autoRefreshInterval = setInterval(this.refreshLogs.bind(this), 120000);
+            }
         },
         
         /**
@@ -64,17 +97,33 @@
         },
         
         /**
-         * Refresh logs
+         * Refresh logs with caching and conditional updates
          */
         refreshLogs: function() {
+            // Don't refresh if page is hidden
+            if (document.hidden) {
+                return;
+            }
+            
             var currentTab = $('.nav-tab-active').attr('href').split('tab=')[1] || 'system';
             var currentPage = $('.pagination .current').text() || 1;
+            
+            // Check cache first
+            var cacheKey = currentTab + '_' + currentPage;
+            var cachedData = this.getCachedData(cacheKey);
+            
+            if (cachedData) {
+                this.updateLogsTable(cachedData.logs);
+                this.updatePagination(cachedData.pages, currentPage);
+                this.updateLastRefresh();
+                return;
+            }
             
             this.loadLogs(currentTab, currentPage);
         },
         
         /**
-         * Load logs via AJAX
+         * Load logs via AJAX with timeout and retry logic
          */
         loadLogs: function(tab, page) {
             var self = this;
@@ -82,22 +131,41 @@
             $.ajax({
                 url: ajaxurl,
                 type: 'POST',
+                timeout: 10000, // 10 second timeout
                 data: {
                     action: 'insurance_crm_get_logs',
                     tab: tab,
                     page: page,
                     per_page: 20,
-                    nonce: $('#log-nonce').val()
+                    nonce: $('#log-nonce').val(),
+                    last_hash: this.lastDataHash // For conditional updates
                 },
                 beforeSend: function() {
                     $('.logs-table tbody').addClass('loading');
                 },
                 success: function(response) {
                     if (response.success) {
-                        self.updateLogsTable(response.data.logs);
-                        self.updatePagination(response.data.pages, page);
-                        self.updateLastRefresh();
+                        // Check if data actually changed
+                        var newDataHash = self.hashData(response.data);
+                        if (newDataHash !== self.lastDataHash) {
+                            self.updateLogsTable(response.data.logs);
+                            self.updatePagination(response.data.pages, page);
+                            self.updateLastRefresh();
+                            
+                            // Cache the data for 5 minutes
+                            self.cacheData(tab + '_' + page, response.data);
+                            self.lastDataHash = newDataHash;
+                        }
+                        
+                        // Reset retry count on success
+                        self.retryCount = 0;
+                    } else {
+                        self.handleLoadError();
                     }
+                },
+                error: function(xhr, status, error) {
+                    console.warn('AJAX error loading logs:', status, error);
+                    self.handleLoadError();
                 },
                 complete: function() {
                     $('.logs-table tbody').removeClass('loading');
@@ -259,6 +327,56 @@
                     func.apply(context, args);
                 }, delay);
             };
+        },
+        
+        /**
+         * Cache data with expiration
+         */
+        cacheData: function(key, data) {
+            this.cache[key] = {
+                data: data,
+                timestamp: Date.now(),
+                expires: Date.now() + (5 * 60 * 1000) // 5 minutes
+            };
+        },
+        
+        /**
+         * Get cached data if still valid
+         */
+        getCachedData: function(key) {
+            var cached = this.cache[key];
+            if (cached && Date.now() < cached.expires) {
+                return cached.data;
+            }
+            return null;
+        },
+        
+        /**
+         * Hash data for change detection
+         */
+        hashData: function(data) {
+            return btoa(JSON.stringify(data)).slice(0, 20);
+        },
+        
+        /**
+         * Handle load errors with progressive retry
+         */
+        handleLoadError: function() {
+            this.retryCount++;
+            
+            if (this.retryCount <= this.maxRetries) {
+                // Progressive delay: 2s, 4s, 8s
+                var delay = Math.pow(2, this.retryCount) * 1000;
+                
+                console.log('Retrying log load in ' + delay + 'ms (attempt ' + this.retryCount + ')');
+                
+                setTimeout(function() {
+                    this.refreshLogs();
+                }.bind(this), delay);
+            } else {
+                console.error('Max retry attempts reached for log loading');
+                this.retryCount = 0; // Reset for next attempt
+            }
         }
     };
     

@@ -54,10 +54,10 @@ class Insurance_CRM_License_Manager {
         add_action('wp_ajax_nopriv_validate_license', array($this, 'ajax_validate_license'));
         add_action('wp_login', array($this, 'validate_license_on_login'), 10, 2);
         
-        // Periodic license check (every 60 minutes)
+        // Periodic license check (every 24 hours)
         add_action('insurance_crm_periodic_license_check', array($this, 'perform_periodic_license_check'));
         if (!wp_next_scheduled('insurance_crm_periodic_license_check')) {
-            wp_schedule_event(time(), 'insurance_crm_60_minutes', 'insurance_crm_periodic_license_check');
+            wp_schedule_event(time(), 'daily', 'insurance_crm_periodic_license_check');
         }
         
         // Daily license logging (every 24 hours)
@@ -74,8 +74,8 @@ class Insurance_CRM_License_Manager {
      * Initialize license manager
      */
     public function init() {
-        // Check license status if needed
-        $this->maybe_check_license_status();
+        // No automatic license checking on page loads - only on login and daily cron
+        // This eliminates continuous license API calls during normal page navigation
     }
 
     /**
@@ -348,9 +348,9 @@ class Insurance_CRM_License_Manager {
     private function maybe_check_license_status() {
         $last_check = get_option('insurance_crm_license_last_check', '');
         
-        // Check every 4 hours
+        // Check once per day (24 hours)
         if (empty($last_check) || 
-            strtotime($last_check) < (time() - 4 * 60 * 60)) {
+            strtotime($last_check) < (time() - 24 * 60 * 60)) {
             $this->perform_license_check();
         }
     }
@@ -439,10 +439,18 @@ class Insurance_CRM_License_Manager {
     }
     
     /**
-     * Periodic license check (every 4 hours)
+     * Periodic license check (every 24 hours)
      */
     public function perform_periodic_license_check() {
-        error_log('[LISANS DEBUG] Performing periodic license check (4-hour interval)');
+        // Set flag to indicate this is a periodic check for API logging
+        define('INSURANCE_CRM_PERIODIC_LICENSE_CHECK', true);
+        
+        // Only log periodic check once per day to reduce debug.log size
+        $last_log = get_option('insurance_crm_license_last_debug_log', '');
+        if (empty($last_log) || strtotime($last_log) < (time() - 24 * 60 * 60)) {
+            error_log('[LISANS DEBUG] Performing daily license check (24-hour interval)');
+            update_option('insurance_crm_license_last_debug_log', current_time('mysql'));
+        }
         $this->perform_license_check();
     }
 
@@ -468,10 +476,7 @@ class Insurance_CRM_License_Manager {
      * Add custom cron schedules
      */
     public function add_custom_cron_schedules($schedules) {
-        $schedules['insurance_crm_60_minutes'] = array(
-            'interval' => 60 * MINUTE_IN_SECONDS,
-            'display' => __('Every 60 Minutes (Insurance CRM License Check)')
-        );
+        // No longer needed - using WordPress built-in 'daily' schedule
         return $schedules;
     }
 
@@ -488,41 +493,53 @@ class Insurance_CRM_License_Manager {
             return;
         }
 
-        error_log('[LISANS DEBUG] User login detected, performing license validation: ' . $user_login);
+        // Only perform license check and log once per user per day to eliminate spam logging
+        $user_last_check = get_user_meta($user->ID, 'insurance_crm_license_last_check', true);
+        $should_check = empty($user_last_check) || strtotime($user_last_check) < (time() - 24 * 60 * 60);
         
-        // Perform immediate license check on every login
-        $this->perform_license_check();
-        
-        // Get license details for logging
-        $license_status = get_option('insurance_crm_license_status', 'inactive');
-        $license_key = get_option('insurance_crm_license_key', '');
-        $license_expiry = get_option('insurance_crm_license_expiry', '');
-        $is_restricted = get_option('insurance_crm_license_access_restricted', false);
-        $is_bypassed = $this->license_api ? $this->license_api->is_license_bypassed() : false;
-        
-        // Log license validation result to database
-        $this->log_license_validation_result($user->ID, array(
-            'user_login' => $user_login,
-            'license_status' => $license_status,
-            'license_key_partial' => !empty($license_key) ? substr($license_key, 0, 8) . '...' : 'None',
-            'license_expiry' => $license_expiry,
-            'is_restricted' => $is_restricted,
-            'is_bypassed' => $is_bypassed,
-            'validation_time' => current_time('mysql'),
-            'ip_address' => $this->get_client_ip()
-        ));
-        
-        // If license is invalid or access is restricted, log them out
-        if (!$this->can_access_data()) {
-            error_log('[LISANS DEBUG] License check failed on login - Status: ' . $license_status . ', Restricted: ' . ($is_restricted ? 'Yes' : 'No'));
+        if ($should_check) {
+            error_log('[LISANS DEBUG] Daily user login license check for: ' . $user_login);
             
+            // Set flag to indicate this is a login check for API logging
+            define('INSURANCE_CRM_PERIODIC_LICENSE_CHECK', true);
+            
+            // Perform license check
+            $this->perform_license_check();
+            
+            // Update user's last check time
+            update_user_meta($user->ID, 'insurance_crm_license_last_check', current_time('mysql'));
+            
+            // Get license details for logging
+            $license_status = get_option('insurance_crm_license_status', 'inactive');
+            $license_key = get_option('insurance_crm_license_key', '');
+            $license_expiry = get_option('insurance_crm_license_expiry', '');
+            $is_restricted = get_option('insurance_crm_license_access_restricted', false);
+            $is_bypassed = $this->license_api ? $this->license_api->is_license_bypassed() : false;
+            
+            // Log license validation result to database
+            $this->log_license_validation_result($user->ID, array(
+                'user_login' => $user_login,
+                'license_status' => $license_status,
+                'license_key_partial' => !empty($license_key) ? substr($license_key, 0, 8) . '...' : 'None',
+                'license_expiry' => $license_expiry,
+                'is_restricted' => $is_restricted,
+                'is_bypassed' => $is_bypassed,
+                'validation_time' => current_time('mysql'),
+                'ip_address' => $this->get_client_ip()
+            ));
+            
+            // Log final status
+            error_log('[LISANS DEBUG] Daily license validation completed for user: ' . $user_login . ' (Status: ' . $license_status . ')');
+        }
+        
+        // Quick access check without API call - uses cached license status
+        if (!$this->can_access_data()) {
             // Allow access only to license management for expired/invalid licenses
+            $license_status = get_option('insurance_crm_license_status', 'inactive');
             if ($license_status !== 'active' && !$this->is_in_grace_period()) {
-                // Don't log them out, but they'll be redirected to license page by access control
-                error_log('[LISANS DEBUG] User will be restricted to license management only');
+                // User will be redirected to license page by access control
+                error_log('[LISANS DEBUG] User access will be restricted to license management: ' . $user_login);
             }
-        } else {
-            error_log('[LISANS DEBUG] License validation successful for user: ' . $user_login);
         }
     }
 
@@ -670,15 +687,17 @@ class Insurance_CRM_License_Manager {
         // If no specific modules defined, allow all modules (legacy compatibility)
         // This ensures backward compatibility with existing licenses
         if (empty($allowed_modules)) {
-            error_log('[LISANS DEBUG] No specific modules defined in license, allowing access to module: ' . $module);
             return true;
         }
 
         $is_allowed = in_array($module, $allowed_modules);
+        // Only log module access denials to reduce debug.log noise - and only once per hour
         if (!$is_allowed) {
-            error_log('[LISANS DEBUG] Module not in allowed list: ' . $module . '. Allowed: ' . implode(', ', $allowed_modules));
-        } else {
-            error_log('[LISANS DEBUG] Module access granted: ' . $module);
+            $last_module_denial_log = get_option('insurance_crm_license_last_module_denial_log', '');
+            if (empty($last_module_denial_log) || strtotime($last_module_denial_log) < (time() - 60 * 60)) {
+                error_log('[LISANS DEBUG] Module access denied: ' . $module . '. Allowed: ' . implode(', ', $allowed_modules));
+                update_option('insurance_crm_license_last_module_denial_log', current_time('mysql'));
+            }
         }
         
         return $is_allowed;
@@ -871,6 +890,16 @@ class Insurance_CRM_License_Manager {
         wp_clear_scheduled_hook('insurance_crm_daily_license_check');
         wp_clear_scheduled_hook('insurance_crm_periodic_license_check');
         wp_clear_scheduled_hook('insurance_crm_daily_license_log');
+        
+        // Clean up temporary debug logging options
+        delete_option('insurance_crm_license_last_debug_log');
+        delete_option('insurance_crm_license_last_module_log');
+        delete_option('insurance_crm_license_last_api_log');
+        delete_option('insurance_crm_license_last_access_log');
+        delete_option('insurance_crm_license_last_module_access_log');
+        delete_option('insurance_crm_license_last_ajax_log');
+        delete_option('insurance_crm_license_last_ajax_module_log');
+        delete_option('insurance_crm_license_last_module_denial_log');
     }
     
     /**

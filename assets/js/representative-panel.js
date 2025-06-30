@@ -15,7 +15,7 @@
     const config = {
         ajaxUrl: representativePanel.ajaxUrl,
         nonce: representativePanel.nonce,
-        refreshInterval: 300000, // 5 minutes
+        refreshInterval: 900000, // Increased from 5 minutes to 15 minutes (3x improvement)
         animationDuration: 300,
         breakpoints: {
             mobile: 768,
@@ -23,7 +23,9 @@
             desktop: 1200
         },
         debounceDelay: 300,
-        autoSaveDelay: 2000
+        autoSaveDelay: 2000,
+        cacheExpiry: 300000, // 5 minutes cache
+        ajaxTimeout: 10000 // 10 seconds timeout
     };
 
     // Utility functions
@@ -220,7 +222,19 @@
             get(key) {
                 try {
                     const item = localStorage.getItem(`rp_${key}`);
-                    return item ? JSON.parse(item) : null;
+                    if (!item) return null;
+                    
+                    const parsed = JSON.parse(item);
+                    
+                    // Check expiration if timestamp exists
+                    if (parsed.timestamp && parsed.expires) {
+                        if (Date.now() > parsed.expires) {
+                            this.remove(key);
+                            return null;
+                        }
+                    }
+                    
+                    return parsed;
                 } catch (e) {
                     console.warn('Error parsing localStorage item:', e);
                     return null;
@@ -235,21 +249,47 @@
                     console.warn('Error removing localStorage item:', e);
                     return false;
                 }
+            },
+            
+            // Generate cache key from request data
+            generateCacheKey(data) {
+                return btoa(JSON.stringify(data)).slice(0, 20);
+            },
+            
+            // Set data with expiration
+            setWithExpiry(key, value, expiryMs = config.cacheExpiry) {
+                const item = {
+                    ...value,
+                    timestamp: Date.now(),
+                    expires: Date.now() + expiryMs
+                };
+                return this.set(key, item);
             }
         },
 
-        // AJAX request wrapper
+        // AJAX request wrapper with timeout and retry logic
         ajax(options) {
             const defaults = {
                 url: config.ajaxUrl,
                 type: 'POST',
                 dataType: 'json',
+                timeout: config.ajaxTimeout,
                 data: {
                     nonce: config.nonce
                 }
             };
 
-            return $.ajax($.extend(true, defaults, options));
+            const settings = $.extend(true, defaults, options);
+            
+            // Add conditional request header if we have cached data
+            const cacheKey = this.generateCacheKey(settings.data);
+            const cachedData = this.get('cache_' + cacheKey);
+            if (cachedData) {
+                settings.headers = settings.headers || {};
+                settings.headers['If-Modified-Since'] = new Date(cachedData.timestamp).toUTCString();
+            }
+
+            return $.ajax(settings);
         },
 
         // Confirm dialog
@@ -268,6 +308,9 @@
     const dashboard = {
         refreshTimer: null,
         lastRefresh: null,
+        retryCount: 0,
+        maxRetries: 3,
+        lastDataHash: null,
 
         init() {
             this.bindEvents();
@@ -295,28 +338,60 @@
         },
 
         refreshData() {
+            // Don't refresh if page is hidden
+            if (document.hidden) {
+                return;
+            }
+            
             const button = $('.btn-refresh, .refresh-dashboard').first();
+            
+            // Check cache first
+            const cacheKey = 'dashboard_data_' + Date.now().toString().slice(0, -5); // 10-second cache key resolution
+            const cachedData = utils.storage.get('cache_' + cacheKey.slice(0, -1)); // Check last 10-second window
+            
+            if (cachedData && cachedData.data) {
+                this.updateStats(cachedData.data);
+                this.lastRefresh = new Date(cachedData.timestamp);
+                utils.showNotification('Dashboard verileri önbellekten güncellendi', 'info', 2000);
+                return;
+            }
+            
             utils.setLoading(button);
 
             utils.ajax({
                 data: {
                     action: 'refresh_dashboard_data',
-                    nonce: config.nonce
+                    nonce: config.nonce,
+                    last_hash: this.lastDataHash // For conditional updates
                 }
             })
             .done((response) => {
                 if (response.success) {
-                    this.updateStats(response.data);
-                    this.lastRefresh = new Date();
-                    utils.storage.set('dashboard_data', response.data);
-                    utils.storage.set('last_refresh', this.lastRefresh.toISOString());
-                    utils.showNotification('Dashboard verileri güncellendi', 'success', 3000);
+                    // Check if data actually changed
+                    const newDataHash = this.hashData(response.data);
+                    if (newDataHash !== this.lastDataHash || !this.lastDataHash) {
+                        this.updateStats(response.data);
+                        this.lastRefresh = new Date();
+                        this.lastDataHash = newDataHash;
+                        
+                        // Cache with expiry
+                        utils.storage.setWithExpiry('dashboard_data', response.data);
+                        utils.storage.set('last_refresh', this.lastRefresh.toISOString());
+                        
+                        utils.showNotification('Dashboard verileri güncellendi', 'success', 3000);
+                    } else {
+                        utils.showNotification('Veriler güncel, değişiklik yok', 'info', 2000);
+                    }
+                    
+                    // Reset retry count on success
+                    this.retryCount = 0;
                 } else {
-                    utils.showNotification(response.data || 'Veriler güncellenirken hata oluştu', 'error');
+                    this.handleRefreshError(response.data || 'Veriler güncellenirken hata oluştu');
                 }
             })
-            .fail(() => {
-                utils.showNotification('Bağlantı hatası oluştu', 'error');
+            .fail((xhr, status, error) => {
+                console.warn('Dashboard refresh failed:', status, error);
+                this.handleRefreshError('Bağlantı hatası oluştu');
             })
             .always(() => {
                 utils.setLoading(button, false);
@@ -386,21 +461,30 @@
                 clearInterval(this.refreshTimer);
             }
 
-            // Start new timer
+            // Only start if page is visible
+            if (document.hidden) {
+                return;
+            }
+
+            // Start new timer with optimized interval (15 minutes)
             this.refreshTimer = setInterval(() => {
                 if (document.visibilityState === 'visible') {
                     this.refreshData();
                 }
             }, config.refreshInterval);
 
-            // Pause when page is hidden
-            $(document).on('visibilitychange', () => {
+            // Handle page visibility changes
+            document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'hidden') {
                     if (this.refreshTimer) {
                         clearInterval(this.refreshTimer);
+                        this.refreshTimer = null;
                     }
                 } else {
-                    this.startAutoRefresh();
+                    // Resume after a brief delay when page becomes visible
+                    setTimeout(() => {
+                        this.startAutoRefresh();
+                    }, 2000);
                 }
             });
         },
@@ -479,10 +563,17 @@
                 const now = new Date();
                 const timeDiff = now - refreshTime;
                 
-                // Use cached data if less than 10 minutes old
-                if (timeDiff < 600000) {
-                    this.updateStats(cachedData);
+                // Use cached data if less than cache expiry time
+                if (timeDiff < config.cacheExpiry) {
+                    this.updateStats(cachedData.data || cachedData);
                     this.lastRefresh = refreshTime;
+                    this.lastDataHash = this.hashData(cachedData.data || cachedData);
+                    
+                    // Show cache indicator
+                    const indicator = $('.last-update, .refresh-indicator');
+                    if (indicator.length) {
+                        indicator.append(' <small>(önbellek)</small>');
+                    }
                 }
             }
         },
@@ -576,6 +667,38 @@
             }
             
             utils.storage.set('user_actions', actions);
+        },
+        
+        /**
+         * Hash data for change detection
+         */
+        hashData(data) {
+            try {
+                return btoa(JSON.stringify(data)).slice(0, 20);
+            } catch (e) {
+                return Date.now().toString();
+            }
+        },
+        
+        /**
+         * Handle refresh errors with progressive retry
+         */
+        handleRefreshError(message) {
+            this.retryCount++;
+            
+            if (this.retryCount <= this.maxRetries) {
+                // Progressive delay: 5s, 10s, 20s
+                const delay = Math.pow(2, this.retryCount) * 2500;
+                
+                utils.showNotification(`Yeniden denenecek (${this.retryCount}/${this.maxRetries})`, 'warning', 3000);
+                
+                setTimeout(() => {
+                    this.refreshData();
+                }, delay);
+            } else {
+                utils.showNotification(message, 'error');
+                this.retryCount = 0; // Reset for next manual attempt
+            }
         }
     };
 

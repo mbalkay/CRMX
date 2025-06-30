@@ -117,20 +117,17 @@ function insurance_crm_check_admin_page_access() {
     
     global $insurance_crm_license_manager;
     
-    // Perform real-time license check on page access
-    if ($insurance_crm_license_manager) {
-        $insurance_crm_license_manager->perform_license_check();
-    }
+    // NO REAL-TIME LICENSE CHECK - use cached status only to prevent continuous API calls
+    // License checks only happen on login and daily cron job
     
-    // Check if data access is allowed
+    // Check if data access is allowed using cached license status
     if (!insurance_crm_can_access_data()) {
-        error_log('[LISANS DEBUG] Admin page access denied - redirecting to license page');
-        // Redirect to license page with restriction notice
+        // Redirect to license page with restriction notice - no logging to reduce debug.log spam
         wp_redirect(admin_url('admin.php?page=insurance-crm-license&restriction=data'));
         exit;
     }
     
-    // Check module access for specific pages
+    // Check module access for specific pages using cached license data
     $page_modules = array(
         'insurance-crm-customers' => 'customers',
         'insurance-crm-policies' => 'policies',
@@ -140,7 +137,7 @@ function insurance_crm_check_admin_page_access() {
     
     if (isset($page_modules[$_GET['page']])) {
         if (!insurance_crm_can_access_module($page_modules[$_GET['page']])) {
-            error_log('[LISANS DEBUG] Module access denied: ' . $page_modules[$_GET['page']]);
+            // Show restriction without logging to reduce debug.log spam
             insurance_crm_display_license_restriction('module');
             exit;
         }
@@ -292,15 +289,11 @@ function insurance_crm_check_ajax_access() {
     
     global $insurance_crm_license_manager;
     
-    // Perform real-time license check on AJAX requests
-    if ($insurance_crm_license_manager) {
-        $insurance_crm_license_manager->perform_license_check();
-    }
+    // NO REAL-TIME LICENSE CHECK on AJAX - use cached status only to prevent continuous API calls
+    // License checks only happen on login and daily cron job
     
-    // Check general data access
+    // Check general data access using cached license status
     if (!insurance_crm_can_access_data()) {
-        error_log('[LISANS DEBUG] AJAX access denied for action: ' . $_POST['action']);
-        
         $license_info = $insurance_crm_license_manager ? $insurance_crm_license_manager->get_license_info() : array();
         $error_message = 'Lisans süresi dolmuş. Lütfen lisansınızı yenileyin.';
         
@@ -325,12 +318,10 @@ function insurance_crm_check_ajax_access() {
         ));
     }
     
-    // Check module-specific access if module is specified
+    // Check module-specific access if module is specified using cached license data
     if (isset($_POST['module'])) {
         $module = sanitize_text_field($_POST['module']);
         if (!insurance_crm_can_access_module($module)) {
-            error_log('[LISANS DEBUG] AJAX module access denied: ' . $module . ' for action: ' . $_POST['action']);
-            
             // Get detailed module restriction information
             global $insurance_crm_module_restrictions;
             $restriction_details = array();

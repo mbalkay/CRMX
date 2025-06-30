@@ -298,7 +298,26 @@ if (!empty($where_conditions)) {
 // Öncelik sıralaması: alert türü duyurular en üstte
 $query .= " ORDER BY CASE WHEN n.type = 'alert' THEN 0 ELSE 1 END, n.created_at DESC LIMIT 50";
 
-$general_notifications = $wpdb->get_results($wpdb->prepare($query, ...$where_values));
+// Placeholder ve parametre sayısını kontrol et
+$placeholder_count = substr_count($query, '%');
+$param_count = count($where_values);
+
+if ($placeholder_count === $param_count && $param_count > 0) {
+    $general_notifications = $wpdb->get_results($wpdb->prepare($query, ...$where_values));
+} else {
+    error_log("Insurance CRM Notifications: SQL placeholder mismatch. Placeholders: {$placeholder_count}, Parameters: {$param_count}");
+    // Fallback
+    $general_notifications = $wpdb->get_results($wpdb->prepare(
+        "SELECT n.*, c.first_name, c.last_name, p.policy_number, nr.read_at
+         FROM {$wpdb->prefix}insurance_crm_notifications n
+         LEFT JOIN {$wpdb->prefix}insurance_crm_customers c ON n.related_id = c.id AND n.related_type = 'customer'
+         LEFT JOIN {$wpdb->prefix}insurance_crm_policies p ON n.related_id = p.id AND n.related_type = 'policy'
+         LEFT JOIN {$wpdb->prefix}insurance_crm_notification_reads nr ON n.id = nr.notification_id AND nr.user_id = %d
+         WHERE n.user_id = 0 AND (n.expires_at IS NULL OR n.expires_at >= %s)
+         ORDER BY CASE WHEN n.type = 'alert' THEN 0 ELSE 1 END, n.created_at DESC LIMIT 50",
+        $current_user->ID, current_time('mysql')
+    ));
+}
 
 // Genel bildirimlerin okunma durumunu belirle
 if (!empty($general_notifications)) {
@@ -331,7 +350,17 @@ if ($notifications_table_exists) {
                   AND t.due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
                   ORDER BY t.due_date ASC
                   LIMIT 50";
-        $personal_tasks = $wpdb->get_results($wpdb->prepare($query, ...$rep_ids));
+                  
+        // Placeholder ve parametre sayısını kontrol et
+        $placeholder_count = substr_count($query, '%');
+        $param_count = count($rep_ids);
+        
+        if ($placeholder_count === $param_count && $param_count > 0) {
+            $personal_tasks = $wpdb->get_results($wpdb->prepare($query, ...$rep_ids));
+        } else {
+            error_log("Insurance CRM Notifications Tasks: SQL placeholder mismatch. Placeholders: {$placeholder_count}, Parameters: {$param_count}");
+            $personal_tasks = [];
+        }
     }
 }
 

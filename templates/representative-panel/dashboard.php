@@ -1426,7 +1426,16 @@ if ($current_view == 'search' && isset($_GET['keyword']) && !empty(trim($_GET['k
         '%' . $wpdb->esc_like($keyword) . '%' // policy number
     ];
     
-    $total_count_result = $wpdb->get_row($wpdb->prepare($count_query, ...$count_params));
+    // Placeholder ve parametre sayısını kontrol et
+    $count_placeholder_count = substr_count($count_query, '%');
+    $count_param_count = count($count_params);
+    
+    if ($count_placeholder_count === $count_param_count && $count_param_count > 0) {
+        $total_count_result = $wpdb->get_row($wpdb->prepare($count_query, ...$count_params));
+    } else {
+        error_log("Insurance CRM Dashboard Search Count: SQL placeholder mismatch. Placeholders: {$count_placeholder_count}, Parameters: {$count_param_count}");
+        $total_count_result = null;
+    }
     $search_total_results = $total_count_result ? $total_count_result->total_count : 0;
     $search_total_pages = ceil($search_total_results / $search_results_per_page);
     
@@ -1474,7 +1483,16 @@ if ($current_view == 'search' && isset($_GET['keyword']) && !empty(trim($_GET['k
         $offset
     ];
     
-    $search_results = $wpdb->get_results($wpdb->prepare($search_query, ...$search_params));
+    // Placeholder ve parametre sayısını kontrol et
+    $search_placeholder_count = substr_count($search_query, '%');
+    $search_param_count = count($search_params);
+    
+    if ($search_placeholder_count === $search_param_count && $search_param_count > 0) {
+        $search_results = $wpdb->get_results($wpdb->prepare($search_query, ...$search_params));
+    } else {
+        error_log("Insurance CRM Dashboard Search Results: SQL placeholder mismatch. Placeholders: {$search_placeholder_count}, Parameters: {$search_param_count}");
+        $search_results = [];
+    }
 
     if ($wpdb->last_error) {
         error_log('Arama Sorgusu Hatası: ' . $wpdb->last_error);

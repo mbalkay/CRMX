@@ -66,15 +66,24 @@ class Insurance_CRM_License_API {
         // Öncelikle çalıştığı doğrulanan endpoint'i dene
         $primary_endpoint = '/api/validate_license';
         
-        error_log('[LISANS DEBUG] Birincil endpoint deneniyor: ' . $primary_endpoint);
+        // Only log endpoint attempts during periodic checks to reduce debug.log spam
+        $is_periodic_check = defined('INSURANCE_CRM_PERIODIC_LICENSE_CHECK') && INSURANCE_CRM_PERIODIC_LICENSE_CHECK;
+        
+        if ($is_periodic_check) {
+            error_log('[LISANS DEBUG] Birincil endpoint deneniyor: ' . $primary_endpoint);
+        }
         $response = $this->make_request($primary_endpoint, $request_data, 'GET');
         
         if (!is_wp_error($response)) {
-            error_log('[LISANS DEBUG] Birincil endpoint başarılı: ' . $primary_endpoint);
+            if ($is_periodic_check) {
+                error_log('[LISANS DEBUG] Birincil endpoint başarılı: ' . $primary_endpoint);
+            }
             return $response;
         }
         
-        error_log('[LISANS DEBUG] Birincil endpoint başarısız: ' . $response->get_error_message());
+        if ($is_periodic_check) {
+            error_log('[LISANS DEBUG] Birincil endpoint başarısız: ' . $response->get_error_message());
+        }
 
         // Yedek endpoint'leri dene
         $fallback_endpoints = array(
@@ -86,7 +95,9 @@ class Insurance_CRM_License_API {
         $last_error = $response;
         
         foreach ($fallback_endpoints as $endpoint) {
-            error_log('[LISANS DEBUG] Yedek endpoint deneniyor: ' . $endpoint);
+            if ($is_periodic_check) {
+                error_log('[LISANS DEBUG] Yedek endpoint deneniyor: ' . $endpoint);
+            }
             
             if ($endpoint === '/wp-admin/admin-ajax.php') {
                 // WordPress AJAX requires different data structure
@@ -101,11 +112,15 @@ class Insurance_CRM_License_API {
             }
             
             if (!is_wp_error($response)) {
-                error_log('[LISANS DEBUG] Yedek endpoint başarılı: ' . $endpoint);
+                if ($is_periodic_check) {
+                    error_log('[LISANS DEBUG] Yedek endpoint başarılı: ' . $endpoint);
+                }
                 return $response;
             } else {
                 $last_error = $response;
-                error_log('[LISANS DEBUG] Yedek endpoint başarısız: ' . $endpoint . ' - ' . $response->get_error_message());
+                if ($is_periodic_check) {
+                    error_log('[LISANS DEBUG] Yedek endpoint başarısız: ' . $endpoint . ' - ' . $response->get_error_message());
+                }
             }
         }
         
@@ -269,11 +284,16 @@ class Insurance_CRM_License_API {
             }
         }
 
-        // Her zaman debug bilgilerini logla
-        error_log('[LISANS DEBUG] İstek URL: ' . $url);
-        error_log('[LISANS DEBUG] İstek Metodu: ' . $method);
-        error_log('[LISANS DEBUG] İstek Verisi: ' . json_encode($data));
-        error_log('[LISANS DEBUG] İstek Başlıkları: ' . json_encode($args['headers']));
+        // Throttle debug logging to reduce debug.log size - only log once per day
+        $last_api_log = get_option('insurance_crm_license_last_api_log', '');
+        $should_log = $this->debug_mode || empty($last_api_log) || strtotime($last_api_log) < (time() - 24 * 60 * 60);
+        
+        if ($should_log) {
+            error_log('[LISANS DEBUG] İstek URL: ' . $url);
+            error_log('[LISANS DEBUG] İstek Metodu: ' . $method);
+            error_log('[LISANS DEBUG] İstek Verisi: ' . json_encode($data));
+            error_log('[LISANS DEBUG] İstek Başlıkları: ' . json_encode($args['headers']));
+        }
 
         $response = wp_remote_request($url, $args);
         
@@ -293,10 +313,13 @@ class Insurance_CRM_License_API {
         $response_headers = wp_remote_retrieve_headers($response);
 
         // Her zaman response bilgilerini logla
-        error_log('[LISANS DEBUG] Yanıt Kodu: ' . $response_code);
-        error_log('[LISANS DEBUG] Yanıt Boyutu: ' . strlen($response_body) . ' byte');
-        error_log('[LISANS DEBUG] Yanıt İçeriği (ilk 500 karakter): ' . substr($response_body, 0, 500));
-        error_log('[LISANS DEBUG] Yanıt Başlıkları: ' . json_encode($response_headers));
+        if ($should_log) {
+            error_log('[LISANS DEBUG] Yanıt Kodu: ' . $response_code);
+            error_log('[LISANS DEBUG] Yanıt Boyutu: ' . strlen($response_body) . ' byte');
+            error_log('[LISANS DEBUG] Yanıt İçeriği (ilk 500 karakter): ' . substr($response_body, 0, 500));
+            error_log('[LISANS DEBUG] Yanıt Başlıkları: ' . json_encode($response_headers));
+            update_option('insurance_crm_license_last_api_log', current_time('mysql'));
+        }
 
         // Başarılı HTTP kodlarını genişlet
         $successful_codes = array(200, 201, 202);
@@ -345,7 +368,11 @@ class Insurance_CRM_License_API {
             );
         }
 
-        error_log('[LISANS DEBUG] Başarılı yanıt alındı: ' . json_encode($decoded_response));
+        // Only log successful responses during periodic/daily checks to reduce debug.log spam
+        $is_periodic_check = defined('INSURANCE_CRM_PERIODIC_LICENSE_CHECK') && INSURANCE_CRM_PERIODIC_LICENSE_CHECK;
+        if ($should_log || $is_periodic_check) {
+            error_log('[LISANS DEBUG] Başarılı yanıt alındı: ' . json_encode($decoded_response));
+        }
         return $decoded_response;
     }
 

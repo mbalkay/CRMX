@@ -29,7 +29,12 @@ function insurance_crm_frontend_can_access_module($module) {
     
     // Check if license manager exists
     if (!$insurance_crm_license_manager) {
-        error_log('[LISANS DEBUG] Frontend: No license manager available, allowing access to module: ' . $module);
+        // Throttle frontend debug logging - only log once per day to reduce debug.log size
+        $last_frontend_log = get_option('insurance_crm_license_last_frontend_log', '');
+        if (empty($last_frontend_log) || strtotime($last_frontend_log) < (time() - 24 * 60 * 60)) {
+            error_log('[LISANS DEBUG] Frontend: No license manager available, allowing access to module: ' . $module);
+            update_option('insurance_crm_license_last_frontend_log', current_time('mysql'));
+        }
         return true; // Allow access if license manager is not available
     }
     
@@ -37,8 +42,12 @@ function insurance_crm_frontend_can_access_module($module) {
     if ($insurance_crm_license_manager->license_api && 
         $insurance_crm_license_manager->license_api->is_license_bypassed()) {
         
-        // Log bypass usage for debugging
-        error_log('[LISANS DEBUG] Frontend: License bypass is ENABLED - all modules allowed for module: ' . $module);
+        // Log bypass usage for debugging - throttled to once per day
+        $last_bypass_log = get_option('insurance_crm_license_last_bypass_log', '');
+        if (empty($last_bypass_log) || strtotime($last_bypass_log) < (time() - 24 * 60 * 60)) {
+            error_log('[LISANS DEBUG] Frontend: License bypass is ENABLED - all modules allowed for module: ' . $module);
+            update_option('insurance_crm_license_last_bypass_log', current_time('mysql'));
+        }
         
         // Show admin notice if user has admin capabilities
         if (current_user_can('manage_options')) {
@@ -54,13 +63,18 @@ function insurance_crm_frontend_can_access_module($module) {
     
     // Check basic license validity
     if (!$insurance_crm_license_manager->can_access_data()) {
+        // Only log access failures, not successes, to reduce debug.log noise
         error_log('[LISANS DEBUG] Frontend: Basic license access failed for module: ' . $module);
         return false;
     }
     
     // Use the license manager's module check directly (it now handles empty modules properly)
     $is_allowed = $insurance_crm_license_manager->is_module_allowed($module);
-    error_log('[LISANS DEBUG] Frontend: Module ' . $module . ' access result: ' . ($is_allowed ? 'allowed' : 'denied'));
+    
+    // Only log denials to reduce debug.log noise
+    if (!$is_allowed) {
+        error_log('[LISANS DEBUG] Frontend: Module ' . $module . ' access denied');
+    }
     
     return $is_allowed;
 }
