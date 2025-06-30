@@ -1,20 +1,20 @@
 <?php
 /**
- * Insurance CRM
+ * Plugin Name: Insurance CRM
+ * Plugin URI: https://github.com/anadolubirlik/insurance-crm
+ * Description: Sigorta acenteleri için müşteri, poliçe ve görev yönetim sistemi.
+ * Version: 1.9.7_9
+ * Author: Mehmet BALKAY | Anadolu Birlik
+ * Author URI: https://www.balkay.net
+ * License: GPL-2.0+
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: insurance-crm
+ * Domain Path: /languages
  *
  * @package   Insurance_CRM
  * @author    Mehmet BALKAY | Anadolu Birlik
  * @copyright 2025 Anadolu Birlik
  * @license   GPL-2.0+
- *
- * Plugin Name: Insurance CRM
- * Plugin URI: https://github.com/anadolubirlik/insurance-crm
- * Description: Sigorta acenteleri için müşteri, poliçe ve görev yönetim sistemi.
- * Version: 1.9.7_9
- * Pagename: insurance-crm.php
- * Page Version: 1.9.7_9
- * Author: Mehmet BALKAY | Anadolu Birlik
- * Author URI: https://www.balkay.net
  */
 
 if (!defined('WPINC')) {
@@ -670,12 +670,26 @@ function insurance_crm_check_db_tables() {
         error_log('insurance_crm_representatives tablosuna notes sütunu eklendi.');
     }
     
-    // Minimum policy count ve minimum premium amount sütunlarını kontrol et ve ekle
+    // Target policy count, minimum policy count ve minimum premium amount sütunlarını kontrol et ve ekle
+    $target_policy_count_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_representatives LIKE 'target_policy_count'");
     $min_policy_count_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_representatives LIKE 'minimum_policy_count'");
     $min_premium_amount_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_representatives LIKE 'minimum_premium_amount'");
     
+    if (empty($target_policy_count_exists)) {
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN target_policy_count INT DEFAULT 10 AFTER monthly_target");
+        error_log('insurance_crm_representatives tablosuna target_policy_count sütunu eklendi.');
+    }
+    
+    // Avatar URL sütununu kontrol et ve ekle
+    $avatar_url_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_representatives LIKE 'avatar_url'");
+    
+    if (empty($avatar_url_exists)) {
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN avatar_url VARCHAR(255) DEFAULT '' AFTER target_policy_count");
+        error_log('insurance_crm_representatives tablosuna avatar_url sütunu eklendi.');
+    }
+    
     if (empty($min_policy_count_exists)) {
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN minimum_policy_count INT DEFAULT 10 AFTER monthly_target");
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN minimum_policy_count INT DEFAULT 10 AFTER avatar_url");
         error_log('insurance_crm_representatives tablosuna minimum_policy_count sütunu eklendi.');
     }
     
