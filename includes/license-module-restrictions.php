@@ -176,13 +176,11 @@ class Insurance_CRM_Module_Restrictions {
         
         // Check if module exists
         if (!isset($this->available_modules[$module])) {
-            error_log('[LISANS DEBUG] Module not found in available modules: ' . $module);
             return false;
         }
         
         // Admin users always have access
         if (user_can($user_id, 'administrator')) {
-            error_log('[LISANS DEBUG] Admin access granted for module: ' . $module);
             return true;
         }
         
@@ -190,25 +188,21 @@ class Insurance_CRM_Module_Restrictions {
         if ($insurance_crm_license_manager && 
             $insurance_crm_license_manager->license_api && 
             $insurance_crm_license_manager->license_api->is_license_bypassed()) {
-            error_log('[LISANS DEBUG] License bypassed, access granted for module: ' . $module);
             return true;
         }
         
         // If no license manager, allow access (this prevents blocking when system is not properly initialized)
         if (!$insurance_crm_license_manager) {
-            error_log('[LISANS DEBUG] No license manager available, allowing access to module: ' . $module);
             return true;
         }
         
         // Check basic license validity
         if (!$insurance_crm_license_manager->can_access_data()) {
-            error_log('[LISANS DEBUG] Basic license check failed for module: ' . $module);
             return false;
         }
         
         // Use the license manager's module check (which now properly handles empty module lists)
         if (!$insurance_crm_license_manager->is_module_allowed($module)) {
-            error_log('[LISANS DEBUG] Module not allowed by license manager: ' . $module);
             return false;
         }
         
@@ -216,12 +210,10 @@ class Insurance_CRM_Module_Restrictions {
         $module_caps = $this->available_modules[$module]['capabilities'];
         foreach ($module_caps as $cap) {
             if (!user_can($user_id, $cap)) {
-                error_log('[LISANS DEBUG] User lacks capability ' . $cap . ' for module: ' . $module);
                 return false;
             }
         }
         
-        error_log('[LISANS DEBUG] Access granted for module: ' . $module);
         return true;
     }
     
@@ -284,7 +276,6 @@ class Insurance_CRM_Module_Restrictions {
             
             // Check basic license validity first
             if ($insurance_crm_license_manager && !$insurance_crm_license_manager->can_access_data()) {
-                error_log('[LISANS DEBUG] General data access denied for page: ' . $current_page);
                 wp_redirect(admin_url('admin.php?page=insurance-crm-license&restriction=data'));
                 exit;
             }
@@ -303,19 +294,13 @@ class Insurance_CRM_Module_Restrictions {
         // Check module access if we found a matching module
         if ($restricted_module) {
             if (!$this->is_module_accessible($restricted_module)) {
-                error_log('[LISANS DEBUG] Module access denied: ' . $restricted_module . ' for page: ' . $current_page);
-                
                 // Store restriction details for the redirect page
                 set_transient('insurance_crm_restriction_details_' . get_current_user_id(), 
                     $this->get_module_restriction_details($restricted_module), 60);
                 
                 wp_redirect(admin_url('admin.php?page=insurance-crm-license&restriction=module&module=' . $restricted_module));
                 exit;
-            } else {
-                error_log('[LISANS DEBUG] Module access granted: ' . $restricted_module . ' for page: ' . $current_page);
             }
-        } else {
-            error_log('[LISANS DEBUG] No module restriction found for page: ' . $current_page);
         }
     }
     
@@ -347,10 +332,7 @@ class Insurance_CRM_Module_Restrictions {
             foreach ($this->available_modules as $module => $module_info) {
                 if (in_array($page_slug, $module_info['admin_pages'])) {
                     if (!$this->is_module_accessible($module, $user_id)) {
-                        error_log('[LISANS DEBUG] Hiding menu item: ' . $page_slug . ' for module: ' . $module);
                         unset($submenu['insurance-crm'][$index]);
-                    } else {
-                        error_log('[LISANS DEBUG] Keeping menu item: ' . $page_slug . ' for module: ' . $module);
                     }
                     $module_found = true;
                     break;
@@ -361,7 +343,6 @@ class Insurance_CRM_Module_Restrictions {
             if (!$module_found && strpos($page_slug, 'insurance-crm') === 0) {
                 global $insurance_crm_license_manager;
                 if ($insurance_crm_license_manager && !$insurance_crm_license_manager->can_access_data()) {
-                    error_log('[LISANS DEBUG] Hiding non-mapped CRM menu item: ' . $page_slug);
                     unset($submenu['insurance-crm'][$index]);
                 }
             }

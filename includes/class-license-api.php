@@ -66,15 +66,24 @@ class Insurance_CRM_License_API {
         // Öncelikle çalıştığı doğrulanan endpoint'i dene
         $primary_endpoint = '/api/validate_license';
         
-        error_log('[LISANS DEBUG] Birincil endpoint deneniyor: ' . $primary_endpoint);
+        // Only log endpoint attempts during periodic checks to reduce debug.log spam
+        $is_periodic_check = defined('INSURANCE_CRM_PERIODIC_LICENSE_CHECK') && INSURANCE_CRM_PERIODIC_LICENSE_CHECK;
+        
+        if ($is_periodic_check) {
+            error_log('[LISANS DEBUG] Birincil endpoint deneniyor: ' . $primary_endpoint);
+        }
         $response = $this->make_request($primary_endpoint, $request_data, 'GET');
         
         if (!is_wp_error($response)) {
-            error_log('[LISANS DEBUG] Birincil endpoint başarılı: ' . $primary_endpoint);
+            if ($is_periodic_check) {
+                error_log('[LISANS DEBUG] Birincil endpoint başarılı: ' . $primary_endpoint);
+            }
             return $response;
         }
         
-        error_log('[LISANS DEBUG] Birincil endpoint başarısız: ' . $response->get_error_message());
+        if ($is_periodic_check) {
+            error_log('[LISANS DEBUG] Birincil endpoint başarısız: ' . $response->get_error_message());
+        }
 
         // Yedek endpoint'leri dene
         $fallback_endpoints = array(
@@ -86,7 +95,9 @@ class Insurance_CRM_License_API {
         $last_error = $response;
         
         foreach ($fallback_endpoints as $endpoint) {
-            error_log('[LISANS DEBUG] Yedek endpoint deneniyor: ' . $endpoint);
+            if ($is_periodic_check) {
+                error_log('[LISANS DEBUG] Yedek endpoint deneniyor: ' . $endpoint);
+            }
             
             if ($endpoint === '/wp-admin/admin-ajax.php') {
                 // WordPress AJAX requires different data structure
@@ -101,11 +112,15 @@ class Insurance_CRM_License_API {
             }
             
             if (!is_wp_error($response)) {
-                error_log('[LISANS DEBUG] Yedek endpoint başarılı: ' . $endpoint);
+                if ($is_periodic_check) {
+                    error_log('[LISANS DEBUG] Yedek endpoint başarılı: ' . $endpoint);
+                }
                 return $response;
             } else {
                 $last_error = $response;
-                error_log('[LISANS DEBUG] Yedek endpoint başarısız: ' . $endpoint . ' - ' . $response->get_error_message());
+                if ($is_periodic_check) {
+                    error_log('[LISANS DEBUG] Yedek endpoint başarısız: ' . $endpoint . ' - ' . $response->get_error_message());
+                }
             }
         }
         
