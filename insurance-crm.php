@@ -670,12 +670,18 @@ function insurance_crm_check_db_tables() {
         error_log('insurance_crm_representatives tablosuna notes sütunu eklendi.');
     }
     
-    // Minimum policy count ve minimum premium amount sütunlarını kontrol et ve ekle
+    // Target policy count, minimum policy count ve minimum premium amount sütunlarını kontrol et ve ekle
+    $target_policy_count_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_representatives LIKE 'target_policy_count'");
     $min_policy_count_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_representatives LIKE 'minimum_policy_count'");
     $min_premium_amount_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}insurance_crm_representatives LIKE 'minimum_premium_amount'");
     
+    if (empty($target_policy_count_exists)) {
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN target_policy_count INT DEFAULT 10 AFTER monthly_target");
+        error_log('insurance_crm_representatives tablosuna target_policy_count sütunu eklendi.');
+    }
+    
     if (empty($min_policy_count_exists)) {
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN minimum_policy_count INT DEFAULT 10 AFTER monthly_target");
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}insurance_crm_representatives ADD COLUMN minimum_policy_count INT DEFAULT 10 AFTER target_policy_count");
         error_log('insurance_crm_representatives tablosuna minimum_policy_count sütunu eklendi.');
     }
     
