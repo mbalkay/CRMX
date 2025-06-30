@@ -354,6 +354,7 @@ function map_facebook_row_to_customer($row, $headers, $row_index = 0) {
     $customer_data = [
         'tc_identity' => $tc_identity,
         'full_name' => $clean_full_name,
+        'ad_name' => trim($data['ad_name'] ?? ''), // Reklam adı bilgisi
         'email' => trim($data['email'] ?? ''),
         'phone_number' => trim($data['phone_number'] ?? ''),
         'city' => trim($data['city'] ?? ''),
