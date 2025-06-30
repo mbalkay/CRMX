@@ -943,10 +943,27 @@ class Insurance_CRM_Log_Viewer {
         
         <script type="text/javascript">
         jQuery(document).ready(function($) {
-            // Auto-refresh every 30 seconds
-            setInterval(function() {
-                updateRetryStatus();
-            }, 30000);
+            // Auto-refresh optimized to every 120 seconds (was 30 seconds - 4x improvement)
+            // Only refresh if page is visible
+            function scheduleRetryStatusUpdate() {
+                if (!document.hidden) {
+                    setTimeout(function() {
+                        updateRetryStatus();
+                        scheduleRetryStatusUpdate();
+                    }, 120000);
+                }
+            }
+            
+            // Handle page visibility changes
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    // Resume updates when page becomes visible
+                    setTimeout(scheduleRetryStatusUpdate, 2000);
+                }
+            });
+            
+            // Start initial update cycle
+            scheduleRetryStatusUpdate();
         });
         
         function resetUserIPRetryLimit(userId, ipAddress) {

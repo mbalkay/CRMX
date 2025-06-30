@@ -433,9 +433,32 @@ class DashboardWidgets {
     }
 
     startRealTimeUpdates() {
+        // Only start if page is visible and real-time is enabled
+        if (document.hidden) {
+            return;
+        }
+        
+        // Increased from 30 seconds to 120 seconds (4x improvement)
         this.realTimeInterval = setInterval(() => {
-            this.updateDashboardData();
-        }, 30000); // Update every 30 seconds
+            // Only update if page is visible
+            if (document.visibilityState === 'visible') {
+                this.updateDashboardData();
+            }
+        }, 120000);
+        
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                this.stopRealTimeUpdates();
+            } else {
+                // Resume with delay when page becomes visible
+                setTimeout(() => {
+                    if (document.getElementById('realtime-toggle')?.checked) {
+                        this.startRealTimeUpdates();
+                    }
+                }, 3000);
+            }
+        });
     }
 
     stopRealTimeUpdates() {
